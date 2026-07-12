@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ada Voss — Gravitational Wave Astrophysics</title>
+<meta name="description" content="Portfolio of Ada Voss, gravitational wave astrophysics researcher.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#06080F;
+    --void-deep:#020306;
+    --panel:#0B0E19;
+    --ink:#E7E6EF;
+    --ink-dim:#9BA1B8;
+    --hanford:#4FC3F7;   /* LIGO Hanford detector trace */
+    --livingston:#FF6A5B; /* LIGO Livingston detector trace */
+    --line: rgba(231,230,239,0.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--void);
+    color:var(--ink);
+    font-family:'Spectral', serif;
+    font-size:17px;
+    line-height:1.7;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--hanford); color:var(--void-deep); }
+
+  h1,h2,h3{ font-family:'Space Grotesk', sans-serif; font-weight:600; letter-spacing:-0.01em; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--hanford);
+  }
+  a{ color:inherit; }
+
+  .wrap{ position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 32px; }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(6,8,15,0.86);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{ display:flex; align-items:center; justify-content:space-between; padding-top:18px; padding-bottom:18px; }
+  .brand{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:1.15rem; letter-spacing:-0.01em; }
+  .brand .dot{ color:var(--hanford); }
+  .navlinks{ display:flex; gap:34px; list-style:none; font-family:'JetBrains Mono', monospace; font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase; }
+  .navlinks a{ text-decoration:none; opacity:0.75; transition:opacity 0.2s; border-bottom:1px solid transparent; }
+  .navlinks a:hover, .navlinks a:focus-visible{ opacity:1; border-color:var(--hanford); }
+  .navlinks a:focus-visible{ outline:2px solid var(--hanford); outline-offset:4px; }
+
+  /* ---------- HERO / CHIRP DETECTOR ---------- */
+  header.hero{ position:relative; padding:88px 0 40px; }
+  .hero-top{ display:grid; grid-template-columns:1fr 168px; gap:36px; align-items:start; }
+  .hero h1{ font-size:clamp(2.5rem, 5vw, 4rem); line-height:1.06; max-width:14ch; }
+  .hero h1 .accent{ color:var(--hanford); }
+  .hero p.lede{ margin-top:22px; max-width:52ch; color:var(--ink-dim); font-size:1.08rem; }
+  .coords{ margin-top:26px; font-family:'JetBrains Mono', monospace; font-size:0.78rem; color:var(--ink-dim); letter-spacing:0.03em; }
+
+  .photo-frame{
+    border:1px dashed var(--line);
+    background:var(--panel);
+    aspect-ratio:4/5;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px;
+    color:var(--ink-dim);
+  }
+  .photo-frame svg{ width:34px; height:34px; opacity:0.55; }
+  .photo-frame .photo-label{
+    font-family:'JetBrains Mono', monospace; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; text-align:center; padding:0 8px;
+  }
+  .photo-caption{
+    margin-top:8px; text-align:center;
+    font-family:'JetBrains Mono', monospace; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-dim);
+  }
+
+  .detector{
+    position:relative;
+    margin-top:52px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    padding:0;
+  }
+  /* interferometer-arm corner marks, echoing the L-shaped detector geometry */
+  .detector::before, .detector::after{
+    content:""; position:absolute; width:26px; height:26px;
+    border-color:var(--hanford); opacity:0.6; pointer-events:none;
+  }
+  .detector::before{ top:-1px; left:-1px; border-top:2px solid; border-left:2px solid; }
+  .detector::after{ bottom:-1px; right:-1px; border-bottom:2px solid; border-right:2px solid; border-color:var(--livingston); }
+
+  .detector-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px; border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-dim);
+  }
+  .status-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--hanford); margin-right:8px; box-shadow:0 0 8px var(--hanford); }
+  .status-dot.hold{ background:#5EE6A0; box-shadow:0 0 8px #5EE6A0; }
+
+  canvas#chirp{ display:block; width:100%; height:260px; }
+
+  .detector-foot{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+    padding:16px 22px; border-top:1px solid var(--line);
+  }
+  .legend{ display:flex; gap:18px; font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.05em; }
+  .legend button{
+    display:flex; align-items:center; gap:8px;
+    background:none; border:1px solid var(--line); color:var(--ink-dim);
+    padding:7px 12px; cursor:pointer; font-family:inherit; font-size:inherit;
+    letter-spacing:0.05em; text-transform:uppercase; transition:all 0.15s ease;
+  }
+  .legend button .swatch{ width:12px; height:2px; display:inline-block; }
+  .legend button[aria-pressed="true"]{ color:var(--ink); border-color:currentColor; }
+  .legend button:hover, .legend button:focus-visible{ color:var(--ink); border-color:var(--ink-dim); }
+  .legend button:focus-visible{ outline:2px solid var(--hanford); outline-offset:2px; }
+  #h1-btn.on .swatch, #h1-btn[aria-pressed="true"] .swatch{ background:var(--hanford); }
+  #l1-btn.on .swatch, #l1-btn[aria-pressed="true"] .swatch{ background:var(--livingston); }
+  .legend button .swatch{ background:var(--line); }
+
+  .replay-btn{
+    background:var(--hanford); color:var(--void-deep); border:none;
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase;
+    padding:9px 16px; cursor:pointer; transition:opacity 0.15s ease;
+  }
+  .replay-btn:hover, .replay-btn:focus-visible{ opacity:0.85; }
+  .replay-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+  .readout{ font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--ink-dim); text-align:right; min-width:170px; }
+  .readout strong{ color:var(--ink); font-weight:500; }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{ padding:90px 0; border-top:1px solid var(--line); }
+  .section-head{ display:flex; align-items:baseline; gap:18px; margin-bottom:46px; }
+  .section-head .num{ font-family:'JetBrains Mono', monospace; color:var(--livingston); font-size:0.85rem; }
+  .section-head h2{ font-size:2.1rem; }
+
+  /* ---------- ABOUT ---------- */
+  .about-grid{ display:grid; grid-template-columns:0.85fr 1.15fr; gap:64px; }
+  .about-side{ display:flex; flex-direction:column; gap:26px; }
+  .about-grid .field-note{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.75rem;
+    color:var(--ink-dim);
+    border-left:2px solid var(--hanford);
+    padding-left:16px;
+    line-height:1.9;
+  }
+
+  /* ---------- PULSAR PANEL ---------- */
+  .pulsar-panel{
+    border:1px solid var(--line);
+    background:var(--panel);
+  }
+  .pulsar-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-dim);
+  }
+  .pulsar-svg{ display:block; width:100%; height:auto; }
+  .spin-group{ transform-origin:100px 100px; animation:spin 2.4s linear infinite; }
+  @keyframes spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  .pulsar-label{
+    font-family:'JetBrains Mono', monospace; font-size:8px; fill:var(--ink-dim); letter-spacing:0.05em;
+  }
+  .pulsar-foot{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 18px; border-top:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--ink-dim); letter-spacing:0.04em;
+  }
+  .pulse-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:rgba(255,106,91,0.25);
+    box-shadow:0 0 0 rgba(255,106,91,0);
+    transition:background 0.1s ease, box-shadow 0.1s ease;
+    flex-shrink:0;
+  }
+  .pulse-dot.flash{
+    background:var(--livingston);
+    box-shadow:0 0 10px var(--livingston);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .spin-group{ animation:none; }
+  }
+  .about-grid p{ margin-bottom:16px; color:var(--ink-dim); }
+  .about-grid p:first-child{ font-size:1.15rem; color:var(--ink); }
+
+  /* ---------- RESEARCH PROJECT BLOCKS ---------- */
+  .project-block{ margin-bottom:56px; }
+  .project-block:last-of-type{ margin-bottom:52px; }
+  .project-title{ font-size:1.5rem; margin-bottom:12px; }
+  .project-desc{ color:var(--ink-dim); max-width:68ch; margin-bottom:26px; }
+
+  .dual-panel{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch; }
+
+  /* ---------- NEUTRON STAR STRUCTURE PANEL ---------- */
+  .structure-panel{
+    border:1px solid var(--line);
+    background:var(--panel);
+    display:flex; flex-direction:column;
+  }
+  .structure-head{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;
+    padding:14px 20px; border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-dim);
+  }
+  .structure-cross{
+    flex:1;
+    display:flex; align-items:center; justify-content:center;
+    padding:26px;
+  }
+  .structure-svg{ width:100%; max-width:220px; height:auto; }
+  .tick-crust{ transform-origin:100px 100px; animation:spin-cw 4.2s linear infinite; }
+  .tick-outer{ transform-origin:100px 100px; animation:spin-cw 2.3s linear infinite; }
+  .tick-inner{ transform-origin:100px 100px; animation:spin-cw 1s linear infinite; }
+  @keyframes spin-cw{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  .layer-label{ font-family:'JetBrains Mono', monospace; font-size:6.5px; fill:var(--ink-dim); letter-spacing:0.03em; }
+
+  .structure-foot{
+    display:flex; gap:26px; flex-wrap:wrap;
+    padding:14px 20px; border-top:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--ink-dim); letter-spacing:0.02em;
+  }
+  .structure-foot strong{ color:var(--ink); font-weight:500; }
+  .structure-foot .swatch-inline{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+
+  @media (prefers-reduced-motion: reduce){
+    .tick-crust, .tick-outer, .tick-inner{ animation:none; }
+  }
+  @media (max-width:700px){
+    .dual-panel{ grid-template-columns:1fr; }
+  }
+  .catalog{ display:flex; flex-direction:column; }
+  .entry{
+    display:grid; grid-template-columns:150px 1fr 200px;
+    gap:28px;
+    padding:28px 22px;
+    margin:0 -22px;
+    border-top:1px solid var(--line);
+    align-items:start;
+    transition:background 0.2s ease;
+  }
+  .catalog .entry:last-child{ border-bottom:1px solid var(--line); }
+  .entry:hover, .entry:focus-within{ background:var(--panel); }
+  .entry .id{ font-family:'JetBrains Mono', monospace; color:var(--livingston); font-size:0.85rem; letter-spacing:0.02em; padding-top:4px; }
+  .entry h3{ font-size:1.5rem; margin-bottom:8px; }
+  .entry p{ color:var(--ink-dim); font-size:0.97rem; }
+  .entry .meta{ font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--ink-dim); text-align:right; line-height:2; text-transform:uppercase; letter-spacing:0.06em; }
+  .entry .meta span{ display:block; }
+  .spark{ width:100%; height:26px; margin-top:10px; display:block; }
+  .spark path{ stroke:var(--hanford); stroke-width:1.4; fill:none; opacity:0.55; transition:opacity 0.2s ease, stroke-width 0.2s ease; }
+  .entry:hover .spark path, .entry:focus-within .spark path{ opacity:1; stroke-width:2; }
+
+  /* ---------- PUBLICATIONS ---------- */
+  .pubs{ list-style:none; }
+  .pubs li{
+    display:grid; grid-template-columns:70px 1fr auto;
+    gap:20px;
+    padding:18px 0;
+    border-top:1px solid var(--line);
+    font-size:0.95rem;
+    align-items:baseline;
+  }
+  .pubs li:last-child{ border-bottom:1px solid var(--line); }
+  .pubs .yr{ font-family:'JetBrains Mono', monospace; color:var(--livingston); font-size:0.85rem; }
+  .pubs .venue{ font-family:'JetBrains Mono', monospace; color:var(--ink-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap; }
+  .pubs .title-line em{ color:var(--ink-dim); font-style:italic; }
+
+  /* ---------- CONTACT ---------- */
+  .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
+  .contact-grid h2{ font-size:2.4rem; max-width:11ch; }
+  .contact-list{ list-style:none; font-family:'JetBrains Mono', monospace; font-size:0.85rem; }
+  .contact-list li{ padding:14px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; }
+  .contact-list li:last-child{ border-bottom:1px solid var(--line); }
+  .contact-list a{ text-decoration:none; color:var(--hanford); }
+  .contact-list a:hover{ text-decoration:underline; }
+  .contact-list .k{ color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.1em; font-size:0.72rem; }
+
+  /* ---------- JOURNEY / GLOBE ---------- */
+  .journey-layout{ display:grid; grid-template-columns:340px 1fr; gap:56px; align-items:center; }
+  .globe-wrap{
+    position:relative; width:100%; max-width:320px; aspect-ratio:1/1;
+    border-radius:50%; overflow:hidden;
+  }
+  .globe{ display:block; width:100%; height:100%; }
+  .globe-sheen{
+    position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    background-size:250% 250%;
+    animation:sheen-move 5s ease-in-out infinite;
+  }
+  @keyframes sheen-move{
+    0%{ background-position:0% 50%; }
+    50%{ background-position:100% 50%; }
+    100%{ background-position:0% 50%; }
+  }
+  .journey-list{ list-style:none; display:flex; flex-direction:column; gap:0; }
+  .journey-list li{
+    display:flex; gap:16px; align-items:flex-start;
+    padding:22px 0; border-top:1px solid var(--line);
+  }
+  .journey-list li:last-child{ border-bottom:1px solid var(--line); }
+  .jy-dot{ width:10px; height:10px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+  .jy-dot--warsaw{ background:var(--hanford); box-shadow:0 0 8px var(--hanford); }
+  .jy-dot--chennai{ background:var(--livingston); box-shadow:0 0 8px var(--livingston); }
+  .jy-place{ font-family:'Space Grotesk', sans-serif; font-size:1.15rem; font-weight:600; margin-bottom:4px; }
+  .jy-role{ font-family:'JetBrains Mono', monospace; font-size:0.78rem; color:var(--ink-dim); letter-spacing:0.02em; }
+  .jy-role em{ color:var(--ink); font-style:normal; }
+
+  @media (prefers-reduced-motion: reduce){
+    .globe-sheen{ animation:none; }
+  }
+
+  footer{ padding:36px 0 60px; text-align:center; font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--ink-dim); letter-spacing:0.08em; }
+
+  @media (max-width: 860px){
+    .about-grid, .contact-grid{ grid-template-columns:1fr; }
+    .entry{ grid-template-columns:1fr; }
+    .entry .meta{ text-align:left; }
+    .navlinks{ display:none; }
+    .detector-foot{ flex-direction:column; align-items:flex-start; }
+    .readout{ text-align:left; }
+    .hero-top{ grid-template-columns:1fr; }
+    .photo-frame{ max-width:150px; aspect-ratio:4/5; justify-self:start; }
+    .journey-layout{ grid-template-columns:1fr; }
+    .globe-wrap{ max-width:260px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *{ transition:none !important; }
+  }
+
+  /* ---------- REDSHIFT SCROLL EFFECT ---------- */
+  #page{
+    filter:hue-rotate(var(--rs-hue, 0deg)) saturate(var(--rs-sat, 1));
+  }
+  .redshift-badge{
+    position:fixed; right:18px; bottom:18px; z-index:60;
+    display:flex; flex-direction:column; align-items:flex-end; gap:2px;
+    padding:8px 12px;
+    background:rgba(11,14,25,0.82);
+    border:1px solid var(--line);
+    backdrop-filter:blur(4px);
+    font-family:'JetBrains Mono', monospace;
+    opacity:0; transition:opacity 0.3s ease;
+    pointer-events:none;
+  }
+  .redshift-badge.visible{ opacity:1; }
+  .redshift-badge .z-value{ font-size:0.85rem; color:var(--ink); }
+  .redshift-badge .z-caption{ font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-dim); }
+  @media (max-width:600px){
+    .redshift-badge{ right:12px; bottom:12px; padding:6px 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="page">
+
+<nav>
+  <div class="wrap">
+    <div class="brand">Ada Voss <span class="dot">·</span> GW Astrophysics</div>
+    <ul class="navlinks">
+      <li><a href="#about">About</a></li>
+      <li><a href="#research">Research</a></li>
+      <li><a href="#publications">Publications</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="#journey">Journey</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <p class="eyebrow">Astrophysics Portfolio</p>
+        <h1>Listening for <span class="accent">ripples</span> in spacetime.</h1>
+        <p class="lede">I'm an astrophysicist studying compact object mergers through the gravitational waves they leave behind — the faint strain signals caught by twin detectors thousands of kilometers apart.</p>
+        <p class="coords">KAPTEYN INSTITUTE · LIGO–VIRGO–KAGRA COLLABORATION · O5 OBSERVING RUN</p>
+      </div>
+      <div>
+        <div class="photo-frame">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"/>
+            <path d="M4.5,20 C4.5,15.5 8,13.5 12,13.5 C16,13.5 19.5,15.5 19.5,20"/>
+          </svg>
+          <span class="photo-label">Your photo here</span>
+        </div>
+        <p class="photo-caption">Fig. 0 — Observer</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="about">
+  <div class="wrap about-grid">
+    <div class="about-side">
+      <div class="field-note">
+        FIELD NOTES<br><br>
+        B.Sc. Physics, TU Delft<br>
+        Ph.D. Astrophysics, Leiden Obs.<br><br>
+        Postdoc — Kapteyn Institute<br>
+        2023 – present
+      </div>
+    </div>
+    <div>
+      <p>I study the last moments before two black holes or neutron stars spiral into one another — and the gravitational waves that ripple outward from that collision, stretching and squeezing spacetime itself.</p>
+      <p>My work sits between simulation and detection: I model what a merger's waveform should look like, then search real interferometer data for that signature buried in the noise. A confirmed detection needs the same chirp showing up in two detectors, thousands of kilometers apart, within milliseconds of each other — that coincidence is what turns a noisy wiggle into a discovery.</p>
+      <p>Outside of research, I maintain a small open-source toolkit for gravitational-wave data conditioning, and I mentor early-career researchers moving from physics into astronomy.</p>
+    </div>
+  </div>
+</section>
+
+<section id="research">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="num">§ II</span>
+      <h2>Research Projects</h2>
+    </div>
+
+    <div class="project-block">
+      <h3 class="project-title">01 — Gravitational Waveform Modeling</h3>
+      <p class="project-desc">Modeling the strain signal radiated by inspiraling compact binaries, including the amplitude-modulated bursts produced by orbital eccentricity before radiation reaction circularizes the orbit near merger.</p>
+
+      <div class="detector">
+        <div class="detector-head">
+          <span><span class="status-dot" id="status-dot"></span><span id="status-text">Sweeping — coincidence search in progress</span></span>
+          <span id="event-label">H1 &amp; L1 · 30–350 Hz band · e₀ ≈ 0.4</span>
+        </div>
+        <canvas id="chirp" role="img" aria-label="Animated strain waveform showing a simulated eccentric gravitational wave chirp signal, with periastron bursts that smooth into a continuous chirp as the orbit circularizes, rising in frequency and amplitude before ringdown"></canvas>
+        <div class="detector-foot">
+          <div class="legend">
+            <button type="button" id="h1-btn" aria-pressed="true"><span class="swatch"></span>Hanford (H1)</button>
+            <button type="button" id="l1-btn" aria-pressed="true"><span class="swatch"></span>Livingston (L1)</button>
+          </div>
+          <button type="button" class="replay-btn" id="replay-btn">Replay Detection</button>
+          <div class="readout" id="readout" aria-live="polite">f ≈ <strong>—</strong> Hz &nbsp;|&nbsp; strain ≈ <strong>—</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-block">
+      <h3 class="project-title">02 — Differentially Rotating Neutron Stars</h3>
+      <p class="project-desc">Studying neutron stars whose interior doesn't rotate as a rigid body — layers at different radii spin at different rates, a state that can persist in merger remnants before settling toward uniform rotation.</p>
+
+      <div class="dual-panel">
+        <div class="pulsar-panel">
+          <div class="pulsar-head">
+            <span>PSR Monitor · J-Sim</span>
+            <span>P = 3.16 ms</span>
+          </div>
+          <svg class="pulsar-svg" viewBox="0 0 200 130" role="img" aria-label="Animation of a rapidly rotating neutron star sweeping two radio beams past Earth, flashing each time a beam crosses our line of sight">
+            <defs>
+              <radialGradient id="beamGradTop" cx="50%" cy="100%" r="100%">
+                <stop offset="0%" stop-color="#4FC3F7" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="#4FC3F7" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="beamGradBottom" cx="50%" cy="0%" r="100%">
+                <stop offset="0%" stop-color="#4FC3F7" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="#4FC3F7" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#F4F6FB"/>
+                <stop offset="100%" stop-color="#9BA1B8"/>
+              </radialGradient>
+            </defs>
+
+            <g class="spin-group">
+              <path d="M100,65 C68,25 132,25 100,65" stroke="#9BA1B8" stroke-width="1" fill="none" opacity="0.3"/>
+              <path d="M100,65 C68,105 132,105 100,65" stroke="#9BA1B8" stroke-width="1" fill="none" opacity="0.3"/>
+              <polygon points="100,65 62,0 138,0" fill="url(#beamGradTop)"/>
+              <polygon points="100,65 62,130 138,130" fill="url(#beamGradBottom)"/>
+              <circle cx="100" cy="65" r="10" fill="url(#coreGrad)"/>
+            </g>
+
+            <line x1="192" y1="0" x2="192" y2="130" stroke="#4FC3F7" stroke-dasharray="3,3" opacity="0.4"/>
+            <text x="140" y="12" class="pulsar-label">EARTH →</text>
+          </svg>
+          <div class="pulsar-foot">
+            <span class="pulse-dot" id="pulse-dot"></span>
+            <span id="pulse-readout">Pulses detected: 0</span>
+          </div>
+        </div>
+
+        <div class="structure-panel">
+          <div class="structure-head">
+            <span>Neutron Star Interior</span>
+            <span>Ω(r), not Ω = const.</span>
+          </div>
+          <div class="structure-cross">
+            <svg class="structure-svg" viewBox="0 0 200 200" role="img" aria-label="Cross-section of a neutron star showing crust, outer core, and inner core rotating at different speeds, illustrating differential rotation">
+              <defs>
+                <radialGradient id="crustGrad" cx="40%" cy="35%" r="75%">
+                  <stop offset="0%" stop-color="#3a4560"/>
+                  <stop offset="100%" stop-color="#232c42"/>
+                </radialGradient>
+                <radialGradient id="outerGrad" cx="40%" cy="35%" r="75%">
+                  <stop offset="0%" stop-color="#20314f"/>
+                  <stop offset="100%" stop-color="#152238"/>
+                </radialGradient>
+                <radialGradient id="innerGrad" cx="40%" cy="35%" r="75%">
+                  <stop offset="0%" stop-color="#f4f6fb"/>
+                  <stop offset="100%" stop-color="#8fb6d9"/>
+                </radialGradient>
+              </defs>
+
+              <circle cx="100" cy="100" r="92" fill="url(#crustGrad)" stroke="rgba(231,230,239,0.16)" stroke-width="1"/>
+              <circle cx="100" cy="100" r="66" fill="url(#outerGrad)" stroke="rgba(231,230,239,0.12)" stroke-width="1"/>
+              <circle cx="100" cy="100" r="34" fill="url(#innerGrad)" stroke="rgba(231,230,239,0.1)" stroke-width="1"/>
+
+              <!-- crust rotation ticks (slowest) -->
+              <g class="tick-crust">
+                <line x1="100" y1="8" x2="100" y2="20" stroke="#FF6A5B" stroke-width="2.4"/>
+                <line x1="192" y1="100" x2="180" y2="100" stroke="#FF6A5B" stroke-width="2.4"/>
+                <line x1="100" y1="192" x2="100" y2="180" stroke="#FF6A5B" stroke-width="2.4"/>
+                <line x1="8" y1="100" x2="20" y2="100" stroke="#FF6A5B" stroke-width="2.4"/>
+              </g>
+              <!-- outer core ticks (faster) -->
+              <g class="tick-outer">
+                <line x1="100" y1="34" x2="100" y2="46" stroke="#7CA9D6" stroke-width="2.4"/>
+                <line x1="166" y1="100" x2="154" y2="100" stroke="#7CA9D6" stroke-width="2.4"/>
+                <line x1="100" y1="166" x2="100" y2="154" stroke="#7CA9D6" stroke-width="2.4"/>
+                <line x1="34" y1="100" x2="46" y2="100" stroke="#7CA9D6" stroke-width="2.4"/>
+              </g>
+              <!-- inner core ticks (fastest) -->
+              <g class="tick-inner">
+                <line x1="100" y1="66" x2="100" y2="76" stroke="#4FC3F7" stroke-width="2.6"/>
+                <line x1="134" y1="100" x2="124" y2="100" stroke="#4FC3F7" stroke-width="2.6"/>
+              </g>
+
+              <text x="106" y="18" class="layer-label">CRUST</text>
+              <text x="106" y="44" class="layer-label">OUTER CORE</text>
+              <text x="72" y="102" class="layer-label">INNER CORE</text>
+            </svg>
+          </div>
+          <div class="structure-foot">
+            <span><span class="swatch-inline" style="background:#4FC3F7;"></span>Core Ω ≈ <strong>9,400 rad/s</strong></span>
+            <span><span class="swatch-inline" style="background:#FF6A5B;"></span>Surface Ω ≈ <strong>3,200 rad/s</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="eyebrow" style="margin-bottom:26px;">Other Ongoing Work</p>
+    <div class="catalog">
+      <div class="entry" tabindex="0">
+        <div class="id">GW-260114</div>
+        <div>
+          <h3>Binary Black Hole Merger Rates</h3>
+          <p>Statistical inference on merger rate density across cosmic time, using the full O4/O5 catalog of confirmed binary black hole detections.</p>
+          <svg class="spark" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M0,13 L30,13 L45,6 L60,20 L75,4 L90,22 L105,2 L120,24 L140,13 L300,13"/></svg>
+        </div>
+        <div class="meta"><span>2024 – Ongoing</span><span>Detection</span></div>
+      </div>
+      <div class="entry" tabindex="0">
+        <div class="id">GW-250831</div>
+        <div>
+          <h3>Kilonova Counterpart Search</h3>
+          <p>Rapid optical and infrared follow-up of neutron star merger alerts, searching for the radioactive afterglow of heavy-element formation.</p>
+          <svg class="spark" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M0,13 L20,13 L35,18 L50,8 L65,16 L85,3 L100,23 L115,10 L135,13 L300,13"/></svg>
+        </div>
+        <div class="meta"><span>2023 – 2025</span><span>Observation</span></div>
+      </div>
+      <div class="entry" tabindex="0">
+        <div class="id">GW-230512</div>
+        <div>
+          <h3>Waveform Template Banks</h3>
+          <p>Building improved matched-filter template libraries for eccentric-orbit binaries, closing a known gap in current search pipelines.</p>
+          <svg class="spark" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M0,13 L25,13 L40,10 L55,17 L70,7 L90,19 L110,5 L130,21 L150,13 L300,13"/></svg>
+        </div>
+        <div class="meta"><span>2022 – 2024</span><span>Simulation</span></div>
+      </div>
+      <div class="entry" tabindex="0">
+        <div class="id">GW-210903</div>
+        <div>
+          <h3>Detector Noise Characterization</h3>
+          <p>Identifying and subtracting instrumental noise artifacts in interferometer strain data to lower the detection threshold for faint signals.</p>
+          <svg class="spark" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M0,13 L280,13 L285,4 L290,22 L295,13 L300,13"/></svg>
+        </div>
+        <div class="meta"><span>2020 – 2022</span><span>Instrumentation</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="publications">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="num">§ III</span>
+      <h2>Selected Publications</h2>
+    </div>
+    <ul class="pubs">
+      <li>
+        <span class="yr">2026</span>
+        <span class="title-line">A revised merger rate density for binary black holes through the O5 run — <em>with R. Okafor, T. Lindqvist</em></span>
+        <span class="venue">ApJ</span>
+      </li>
+      <li>
+        <span class="yr">2025</span>
+        <span class="title-line">No optical counterpart to GW250831: constraints on kilonova ejecta mass</span>
+        <span class="venue">ApJ Letters</span>
+      </li>
+      <li>
+        <span class="yr">2024</span>
+        <span class="title-line">Extending matched-filter template banks to moderately eccentric binaries — <em>with M. Haas</em></span>
+        <span class="venue">PRD</span>
+      </li>
+      <li>
+        <span class="yr">2022</span>
+        <span class="title-line">A machine-learning approach to glitch subtraction in Advanced LIGO strain data</span>
+        <span class="venue">CQG</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap contact-grid">
+    <h2>Get in touch.</h2>
+    <ul class="contact-list">
+      <li><span class="k">Email</span> <a href="mailto:ada.voss@example.com">ada.voss@example.com</a></li>
+      <li><span class="k">GitHub</span> <a href="https://github.com/example" target="_blank" rel="noopener">github.com/example</a></li>
+      <li><span class="k">ADS</span> <a href="#" target="_blank" rel="noopener">ui.adsabs.harvard.edu/@avoss</a></li>
+      <li><span class="k">Office</span> <span>Kapteyn Institute, Groningen</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="num">§ V</span>
+      <h2>The Long Way Here</h2>
+    </div>
+    <div class="journey-layout">
+      <div class="globe-wrap">
+        <svg class="globe" viewBox="0 0 240 240" role="img" aria-label="Globe showing a route from Chennai, India to Warsaw, Poland">
+          <defs>
+            <radialGradient id="sphereGrad" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#17233d"/>
+              <stop offset="100%" stop-color="#05070d"/>
+            </radialGradient>
+          </defs>
+          <circle cx="120" cy="120" r="108" fill="url(#sphereGrad)" stroke="rgba(231,230,239,0.16)" stroke-width="1"/>
+
+          <!-- latitude lines -->
+          <ellipse cx="120" cy="120" rx="108" ry="30" fill="none" stroke="rgba(231,230,239,0.14)" stroke-width="1"/>
+          <ellipse cx="120" cy="82" rx="97" ry="19" fill="none" stroke="rgba(231,230,239,0.12)" stroke-width="1"/>
+          <ellipse cx="120" cy="158" rx="97" ry="19" fill="none" stroke="rgba(231,230,239,0.12)" stroke-width="1"/>
+          <ellipse cx="120" cy="46" rx="68" ry="11" fill="none" stroke="rgba(231,230,239,0.1)" stroke-width="1"/>
+          <ellipse cx="120" cy="194" rx="68" ry="11" fill="none" stroke="rgba(231,230,239,0.1)" stroke-width="1"/>
+
+          <!-- longitude lines -->
+          <line x1="120" y1="12" x2="120" y2="228" stroke="rgba(231,230,239,0.14)" stroke-width="1"/>
+          <ellipse cx="120" cy="120" rx="55" ry="108" fill="none" stroke="rgba(231,230,239,0.1)" stroke-width="1"/>
+          <ellipse cx="120" cy="120" rx="88" ry="108" fill="none" stroke="rgba(231,230,239,0.08)" stroke-width="1"/>
+
+          <!-- drifting "continents", clipped to the sphere, to sell the rotation -->
+          <clipPath id="sphereClip">
+            <circle cx="120" cy="120" r="107"/>
+          </clipPath>
+          <g clip-path="url(#sphereClip)">
+            <g class="continents">
+              <ellipse cx="55" cy="95" rx="28" ry="13" fill="#3E7A5E" opacity="0.4"/>
+              <ellipse cx="135" cy="150" rx="42" ry="16" fill="#3E7A5E" opacity="0.32"/>
+              <ellipse cx="235" cy="80" rx="22" ry="11" fill="#3E7A5E" opacity="0.3"/>
+              <ellipse cx="355" cy="95" rx="28" ry="13" fill="#3E7A5E" opacity="0.4"/>
+              <ellipse cx="435" cy="150" rx="42" ry="16" fill="#3E7A5E" opacity="0.32"/>
+              <ellipse cx="535" cy="80" rx="22" ry="11" fill="#3E7A5E" opacity="0.3"/>
+              <animateTransform attributeName="transform" type="translate" from="0,0" to="-300,0" dur="11s" repeatCount="indefinite"/>
+            </g>
+          </g>
+
+          <!-- route: Chennai -> Warsaw -->
+          <path d="M150,158 Q174,56 95,68" fill="none" stroke="#4FC3F7" stroke-width="1.4" stroke-dasharray="4,4" opacity="0.75">
+            <animate attributeName="stroke-dashoffset" values="0;-16" dur="1.1s" repeatCount="indefinite"/>
+          </path>
+
+          <!-- Warsaw marker -->
+          <circle cx="95" cy="68" r="3.4" fill="#4FC3F7"/>
+          <circle cx="95" cy="68" r="3.4" fill="none" stroke="#4FC3F7" stroke-width="1.2">
+            <animate attributeName="r" values="3.4;14;3.4" dur="2.8s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.7;0;0.7" dur="2.8s" repeatCount="indefinite"/>
+          </circle>
+          <text x="60" y="52" class="pulsar-label">WARSAW</text>
+
+          <!-- Chennai marker -->
+          <circle cx="150" cy="158" r="3.4" fill="#FF6A5B"/>
+          <circle cx="150" cy="158" r="3.4" fill="none" stroke="#FF6A5B" stroke-width="1.2">
+            <animate attributeName="r" values="3.4;14;3.4" dur="2.8s" begin="1.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.7;0;0.7" dur="2.8s" begin="1.4s" repeatCount="indefinite"/>
+          </circle>
+          <text x="152" y="180" class="pulsar-label">CHENNAI</text>
+
+          <!-- traveling marker along the route -->
+          <circle r="2.8" fill="#E7E6EF">
+            <animateMotion dur="4.5s" repeatCount="indefinite" path="M150,158 Q174,56 95,68"/>
+          </circle>
+        </svg>
+        <div class="globe-sheen" aria-hidden="true"></div>
+      </div>
+
+      <ul class="journey-list">
+        <li>
+          <span class="jy-dot jy-dot--chennai"></span>
+          <div>
+            <p class="jy-place">Chennai, India</p>
+            <p class="jy-role"><em>M.Sc. in Physics</em> — Indian Institute of Technology Madras</p>
+          </div>
+        </li>
+        <li>
+          <span class="jy-dot jy-dot--warsaw"></span>
+          <div>
+            <p class="jy-place">Warsaw, Poland</p>
+            <p class="jy-role"><em>Ph.D. in Astronomy</em> — in progress</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © 2026 Ada Voss — Built while waiting for the next coincidence.
+</footer>
+
+</div>
+
+<div class="redshift-badge" id="redshift-badge">
+  <span class="z-value" id="z-value">z ≈ 0.00</span>
+  <span class="z-caption">Recession redshift</span>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('chirp');
+  const ctx = canvas.getContext('2d');
+  const h1Btn = document.getElementById('h1-btn');
+  const l1Btn = document.getElementById('l1-btn');
+  const replayBtn = document.getElementById('replay-btn');
+  const readout = document.getElementById('readout');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  let showH1 = true, showL1 = true;
+  let dpr = Math.max(window.devicePixelRatio || 1, 1);
+  let W = 0, H = 0;
+
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width; H = rect.height || 260;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Procedural chirp: eccentric inspiral (periastron bursts that smooth
+  // into a continuous chirp as radiation reaction circularizes the orbit),
+  // then ringdown.
+  function strainAt(u, delay, ampScale){
+    const t = u - delay;
+    if (t <= 0) return 0;
+    const inspiralEnd = 0.78;
+    if (t <= inspiralEnd){
+      const x = t / inspiralEnd;
+      const baseAmp = (0.06 + Math.pow(x, 4) * 0.85) * ampScale;
+      const phase = 42 * Math.pow(x, 1.5) * Math.PI;
+
+      // eccentricity decays toward merger as the orbit circularizes
+      const ecc = 0.85 * Math.pow(1 - x, 1.6);
+      // orbital phase advances slower than the GW carrier — one burst per orbit
+      const orbPhase = 15 * Math.pow(x, 1.05) * Math.PI;
+      const burst = Math.pow((1 + Math.cos(orbPhase)) / 2, 3);
+      const amp = baseAmp * (1 + ecc * 1.7 * burst);
+
+      return amp * Math.sin(phase);
+    } else {
+      const x = (t - inspiralEnd) / (1 - inspiralEnd);
+      const amp = 0.91 * Math.exp(-x * 7) * ampScale;
+      const basePhase = 42 * Math.PI;
+      const phase = basePhase + x * 34 * Math.PI;
+      return amp * Math.sin(phase);
+    }
+  }
+
+  function freqAt(u){
+    const inspiralEnd = 0.78;
+    if (u <= 0) return 30;
+    if (u <= inspiralEnd){
+      const x = u / inspiralEnd;
+      return 30 + Math.pow(x, 3) * 300;
+    }
+    return 330;
+  }
+
+  const N = 480;
+  const sweepMs = 4200, holdMs = 1800, gapMs = 500;
+  const cycleMs = sweepMs + holdMs + gapMs;
+  let start = performance.now();
+
+  function drawGrid(){
+    ctx.strokeStyle = 'rgba(231,230,239,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, H/2);
+    ctx.lineTo(W, H/2);
+    ctx.stroke();
+    for(let i=1;i<8;i++){
+      const x = (W/8)*i;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.strokeStyle = 'rgba(231,230,239,0.045)';
+      ctx.stroke();
+    }
+  }
+
+  function drawTrace(color, delay, ampScale, upTo){
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.globalAlpha = 0.92;
+    let started = false;
+    for(let i=0;i<=N;i++){
+      const u = i/N;
+      if (u > upTo) break;
+      const v = strainAt(u, delay, ampScale);
+      const x = u * W;
+      const y = H/2 - v * (H*0.42);
+      if(!started){ ctx.moveTo(x,y); started = true; } else { ctx.lineTo(x,y); }
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function render(now){
+    const elapsed = (now - start) % cycleMs;
+    ctx.clearRect(0,0,W,H);
+    drawGrid();
+
+    let progress, holding;
+    if (elapsed < sweepMs){
+      progress = elapsed / sweepMs;
+      holding = false;
+    } else if (elapsed < sweepMs + holdMs){
+      progress = 1;
+      holding = true;
+    } else {
+      progress = 0;
+      holding = false;
+    }
+
+    if (showL1) drawTrace('#FF6A5B', 0.015, 0.9, progress);
+    if (showH1) drawTrace('#4FC3F7', 0, 1, progress);
+
+    // playhead
+    if (progress > 0 && progress < 1){
+      const x = progress * W;
+      ctx.strokeStyle = 'rgba(231,230,239,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+
+    if (progress > 0){
+      const f = freqAt(Math.min(progress,1)).toFixed(0);
+      const strainExp = (1.0 + progress*3.4).toFixed(1);
+      readout.innerHTML = 'f ≈ <strong>' + f + '</strong> Hz &nbsp;|&nbsp; strain ≈ <strong>' + strainExp + '×10⁻²¹</strong>';
+    }
+
+    if (holding){
+      statusDot.classList.add('hold');
+      statusText.textContent = 'Coincidence confirmed — H1 & L1 match';
+    } else {
+      statusDot.classList.remove('hold');
+      statusText.textContent = 'Sweeping — coincidence search in progress';
+    }
+
+    if (!reduceMotion){
+      requestAnimationFrame(render);
+    }
+  }
+
+  if (reduceMotion){
+    // Draw a static, fully-formed waveform once; skip animation loop.
+    drawGrid();
+    drawTrace('#FF6A5B', 0.015, 0.9, 1);
+    drawTrace('#4FC3F7', 0, 1, 1);
+    readout.innerHTML = 'f ≈ <strong>330</strong> Hz &nbsp;|&nbsp; strain ≈ <strong>4.4×10⁻²¹</strong>';
+    statusText.textContent = 'Coincidence confirmed — H1 & L1 match';
+    statusDot.classList.add('hold');
+  } else {
+    requestAnimationFrame(render);
+  }
+
+  h1Btn.addEventListener('click', function(){
+    showH1 = !showH1;
+    h1Btn.setAttribute('aria-pressed', showH1 ? 'true' : 'false');
+    if (reduceMotion){
+      ctx.clearRect(0,0,W,H); drawGrid();
+      if (showL1) drawTrace('#FF6A5B', 0.015, 0.9, 1);
+      if (showH1) drawTrace('#4FC3F7', 0, 1, 1);
+    }
+  });
+  l1Btn.addEventListener('click', function(){
+    showL1 = !showL1;
+    l1Btn.setAttribute('aria-pressed', showL1 ? 'true' : 'false');
+    if (reduceMotion){
+      ctx.clearRect(0,0,W,H); drawGrid();
+      if (showL1) drawTrace('#FF6A5B', 0.015, 0.9, 1);
+      if (showH1) drawTrace('#4FC3F7', 0, 1, 1);
+    }
+  });
+  replayBtn.addEventListener('click', function(){
+    start = performance.now();
+    if (reduceMotion){ requestAnimationFrame(render); }
+  });
+
+  // --- Rotating neutron star: flash + count each time a beam sweeps past "Earth" ---
+  // Two beams, opposite sides of the star, cross the observer's line of sight
+  // twice per full rotation (a real pulsar's "lighthouse effect").
+  const pulsarPeriodMs = 2400; // must match the .spin-group CSS animation-duration
+  const pulseDot = document.getElementById('pulse-dot');
+  const pulseReadout = document.getElementById('pulse-readout');
+  let pulseCount = 0;
+
+  function firePulse(){
+    pulseCount++;
+    pulseDot.classList.add('flash');
+    pulseReadout.textContent = 'Pulses detected: ' + pulseCount;
+    setTimeout(function(){ pulseDot.classList.remove('flash'); }, 160);
+  }
+
+  if (!reduceMotion){
+    setTimeout(function beginPulseLoop(){
+      firePulse();
+      setInterval(firePulse, pulsarPeriodMs / 2);
+    }, pulsarPeriodMs * 0.25);
+  } else {
+    pulseReadout.textContent = 'Pulses detected: — (motion reduced)';
+    document.querySelectorAll('svg').forEach(function(svg){
+      if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+    });
+  }
+
+  // --- Redshift scroll effect ---
+  // As the page scrolls down, accent colors warm slightly, like light
+  // stretching from a receding source. A live "z" readout tracks it.
+  if (!reduceMotion){
+    const page = document.getElementById('page');
+    const badge = document.getElementById('redshift-badge');
+    const zValue = document.getElementById('z-value');
+    let ticking = false;
+
+    function updateRedshift(){
+      const doc = document.documentElement;
+      const maxScroll = doc.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? Math.min(Math.max(window.scrollY / maxScroll, 0), 1) : 0;
+
+      const hueDeg = progress * 20;      // subtle hue warm-shift
+      const satVal = 1 + progress * 0.18;
+      page.style.setProperty('--rs-hue', hueDeg.toFixed(1) + 'deg');
+      page.style.setProperty('--rs-sat', satVal.toFixed(2));
+
+      const z = (progress * 0.62).toFixed(2);
+      zValue.textContent = 'z ≈ ' + z;
+
+      badge.classList.toggle('visible', progress > 0.02);
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function(){
+      if (!ticking){
+        requestAnimationFrame(updateRedshift);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    updateRedshift();
+  }
+})();
+</script>
+
+</body>
+</html>
