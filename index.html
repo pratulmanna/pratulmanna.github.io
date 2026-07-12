@@ -260,20 +260,23 @@
   .spark path{ stroke:var(--hanford); stroke-width:1.4; fill:none; opacity:0.55; transition:opacity 0.2s ease, stroke-width 0.2s ease; }
   .entry:hover .spark path, .entry:focus-within .spark path{ opacity:1; stroke-width:2; }
 
-  /* ---------- PUBLICATIONS ---------- */
-  .pubs{ list-style:none; }
-  .pubs li{
-    display:grid; grid-template-columns:70px 1fr auto;
-    gap:20px;
-    padding:18px 0;
-    border-top:1px solid var(--line);
-    font-size:0.95rem;
-    align-items:baseline;
+  /* ---------- PUBLICATIONS (reuses .catalog / .entry layout) ---------- */
+  .entry .meta .pub-authors{
+    display:block; text-transform:none; letter-spacing:0.01em;
+    color:var(--ink-dim); font-size:0.72rem; margin-bottom:8px;
   }
-  .pubs li:last-child{ border-bottom:1px solid var(--line); }
-  .pubs .yr{ font-family:'JetBrains Mono', monospace; color:var(--livingston); font-size:0.85rem; }
-  .pubs .venue{ font-family:'JetBrains Mono', monospace; color:var(--ink-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap; }
-  .pubs .title-line em{ color:var(--ink-dim); font-style:italic; }
+  .entry .meta .pub-journal{
+    display:block; text-transform:none; letter-spacing:0.04em;
+    color:var(--hanford); font-weight:500;
+    animation:journal-glow 2.8s ease-in-out infinite;
+  }
+  @keyframes journal-glow{
+    0%, 100%{ text-shadow:0 0 2px rgba(79,195,247,0.15); opacity:0.75; }
+    50%{ text-shadow:0 0 10px rgba(79,195,247,0.85), 0 0 18px rgba(79,195,247,0.4); opacity:1; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pub-journal{ animation:none; text-shadow:0 0 8px rgba(79,195,247,0.5); opacity:1; }
+  }
 
   /* ---------- CONTACT ---------- */
   .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
@@ -553,6 +556,7 @@
       </div>
     </div>
 
+    <!--
     <p class="eyebrow" style="margin-bottom:26px;">Other Ongoing Work</p>
     <div class="catalog">
       <div class="entry" tabindex="0">
@@ -592,6 +596,7 @@
         <div class="meta"><span>2020 – 2022</span><span>Instrumentation</span></div>
       </div>
     </div>
+    -->
   </div>
 </section>
 
@@ -601,28 +606,20 @@
       <span class="num">§ III</span>
       <h2>Selected Publications</h2>
     </div>
-    <ul class="pubs">
-      <li>
-        <span class="yr">2026</span>
-        <span class="title-line">A revised merger rate density for binary black holes through the O5 run — <em>with R. Okafor, T. Lindqvist</em></span>
-        <span class="venue">ApJ</span>
-      </li>
-      <li>
-        <span class="yr">2025</span>
-        <span class="title-line">No optical counterpart to GW250831: constraints on kilonova ejecta mass</span>
-        <span class="venue">ApJ Letters</span>
-      </li>
-      <li>
-        <span class="yr">2024</span>
-        <span class="title-line">Extending matched-filter template banks to moderately eccentric binaries — <em>with M. Haas</em></span>
-        <span class="venue">PRD</span>
-      </li>
-      <li>
-        <span class="yr">2022</span>
-        <span class="title-line">A machine-learning approach to glitch subtraction in Advanced LIGO strain data</span>
-        <span class="venue">CQG</span>
-      </li>
-    </ul>
+    <div class="catalog">
+      <div class="entry" tabindex="0">
+        <div class="id">01</div>
+        <div>
+          <h3>A revised merger rate density for binary black holes through the O5 run</h3>
+          <p>Statistical inference on merger rate density across cosmic time, using the full O4/O5 catalog of confirmed binary black hole detections.</p>
+          <svg class="spark" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M0,13 L30,13 L45,6 L60,20 L75,4 L90,22 L105,2 L120,24 L140,13 L300,13"/></svg>
+        </div>
+        <div class="meta">
+          <span class="pub-authors">R. Okafor, T. Lindqvist</span>
+          <span class="pub-journal">ApJ · 2026</span>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
