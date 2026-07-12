@@ -268,14 +268,33 @@
   .entry .meta .pub-journal{
     display:block; text-transform:none; letter-spacing:0.04em;
     color:var(--hanford); font-weight:500;
+    text-decoration:none;
     animation:journal-glow 2.8s ease-in-out infinite;
+  }
+  .entry .meta .pub-journal:hover, .entry .meta .pub-journal:focus-visible{
+    text-decoration:underline;
+  }
+  .entry .meta .pub-arxiv{
+    display:block; text-transform:none; letter-spacing:0.04em;
+    color:var(--livingston); font-weight:500; font-size:0.7rem;
+    text-decoration:none; margin-top:8px;
+    animation:arxiv-glow 2.8s ease-in-out infinite;
+    animation-delay:0.35s;
+  }
+  .entry .meta .pub-arxiv:hover, .entry .meta .pub-arxiv:focus-visible{
+    text-decoration:underline;
   }
   @keyframes journal-glow{
     0%, 100%{ text-shadow:0 0 2px rgba(79,195,247,0.15); opacity:0.75; }
     50%{ text-shadow:0 0 10px rgba(79,195,247,0.85), 0 0 18px rgba(79,195,247,0.4); opacity:1; }
   }
+  @keyframes arxiv-glow{
+    0%, 100%{ text-shadow:0 0 2px rgba(255,106,91,0.2); opacity:0.75; }
+    50%{ text-shadow:0 0 10px rgba(255,106,91,0.9), 0 0 18px rgba(255,106,91,0.5); opacity:1; }
+  }
   @media (prefers-reduced-motion: reduce){
-    .pub-journal{ animation:none; text-shadow:0 0 8px rgba(79,195,247,0.5); opacity:1; }
+    .entry .meta .pub-journal{ animation:none; text-shadow:0 0 8px rgba(79,195,247,0.5); opacity:1; }
+    .entry .meta .pub-arxiv{ animation:none; text-shadow:0 0 8px rgba(255,106,91,0.5); opacity:1; }
   }
 
   /* ---------- CONTACT ---------- */
@@ -616,7 +635,8 @@
         </div>
         <div class="meta">
           <span class="pub-authors">R. Okafor, T. Lindqvist</span>
-          <span class="pub-journal">ApJ · 2026</span>
+          <a class="pub-journal" href="#" target="_blank" rel="noopener">ApJ · 2026</a>
+          <a class="pub-arxiv" href="#" target="_blank" rel="noopener">arXiv</a>
         </div>
       </div>
     </div>
