@@ -458,14 +458,14 @@
 
       <div class="detector">
         <div class="detector-head">
-          <span><span class="status-dot" id="status-dot"></span><span id="status-text">Sweeping — coincidence search in progress</span></span>
-          <span id="event-label">H1 &amp; L1 · 30–350 Hz band · e₀ ≈ 0.4</span>
+          <span><span class="status-dot" id="status-dot"></span><span id="status-text">Sweeping — fitting eccentric model to data</span></span>
+          <span id="event-label">H1 · simulated strain · 30–350 Hz · e₀ ≈ 0.4</span>
         </div>
-        <canvas id="chirp" role="img" aria-label="Animated strain waveform showing a simulated eccentric gravitational wave chirp signal, with periastron bursts that smooth into a continuous chirp as the orbit circularizes, rising in frequency and amplitude before ringdown"></canvas>
+        <canvas id="chirp" role="img" aria-label="Animated plot of simulated noisy detector strain data with an eccentric gravitational waveform model drawn on top. The model shows periastron bursts and disagrees with the data early on, then lines up with the data in the last few cycles before merger and throughout the ringdown."></canvas>
         <div class="detector-foot">
           <div class="legend">
-            <button type="button" id="h1-btn" aria-pressed="true"><span class="swatch"></span>Hanford (H1)</button>
-            <button type="button" id="l1-btn" aria-pressed="true"><span class="swatch"></span>Livingston (L1)</button>
+            <button type="button" id="h1-btn" aria-pressed="true"><span class="swatch"></span>Data (simulated)</button>
+            <button type="button" id="l1-btn" aria-pressed="true"><span class="swatch"></span>Eccentric model</button>
           </div>
           <button type="button" class="replay-btn" id="replay-btn">Replay Detection</button>
           <div class="readout" id="readout" aria-live="polite">f ≈ <strong>—</strong> Hz &nbsp;|&nbsp; strain ≈ <strong>—</strong></div>
@@ -630,7 +630,7 @@
         <div class="id">01</div>
         <div>
           <h3>Improved inspiral-merger-ringdown model for BBHs on elliptical orbits</h3>
-          <p>Authors: P. Manna, T. Roychowdhury, C. K. Mishra
+          <p>Authors: P. Manna, T. Roychowdhury, C. K. Mishra</p>
           <p>Development of an eccentric gravitational wave model for binary black holes trained against hybrid waveforms constructed using PN waveforms and NR simulations. This model is tested for eccentricity upto 0.3.</p>
           <svg class="spark" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M0,13 L30,13 L45,6 L60,20 L75,4 L90,22 L105,2 L120,24 L140,13 L300,13"/></svg>
         </div>
@@ -770,182 +770,242 @@
   const statusDot = document.getElementById('status-dot');
   const statusText = document.getElementById('status-text');
 
-  let showH1 = true, showL1 = true;
+  let showData = true, showModel = true;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let dpr = Math.max(window.devicePixelRatio || 1, 1);
   let W = 0, H = 0;
+
+  // ---- Eccentric model vs. noisy data ---------------------------------
+  // DATA : a quasi-circular chirp buried in detector-like noise (simulated).
+  // MODEL: an eccentric waveform drawn on top. Its eccentricity decays as the
+  //        orbit circularizes, so it only lines up with the data in the last
+  //        few cycles before merger and for the whole ringdown.
+  const E0 = 0.4;             // initial eccentricity shown in the readout
+  const inspiralEnd = 0.78;   // merger happens here (fraction of the plot)
+  const matchStart = 0.65;    // ≈ last 5 cycles before merger
+  const modelStart = 0.161;   // model curve begins at a clean zero crossing (skips the odd first cycles)
+
+  // To use a real strain series instead, set REAL_STRAIN to an array of
+  // samples normalized to roughly -1..1 (it is resampled to fit the plot).
+  const REAL_STRAIN = null;
+
+  function envAt(x){ return Math.pow(1 - x, 1.8); }            // x: 0..1 over the inspiral
+  function baseAmpAt(x){ return 0.10 + 0.82 * Math.pow(x, 3.2); }
+
+  function circularAt(u){
+    if (u <= 0) return 0;
+    if (u <= inspiralEnd){
+      const x = u / inspiralEnd;
+      return baseAmpAt(x) * Math.sin(42 * Math.pow(x, 1.5) * Math.PI);
+    }
+    const x = (u - inspiralEnd) / (1 - inspiralEnd);
+    return 0.92 * Math.exp(-x * 7) * Math.sin(42 * Math.PI + x * 34 * Math.PI);
+  }
+
+  function eccentricAt(u){
+    if (u <= 0) return 0;
+    if (u > inspiralEnd) return circularAt(u);          // post-merger: identical
+    const x = u / inspiralEnd;
+    const env = envAt(x);                               // eccentricity envelope
+    const phase = 42 * Math.pow(x, 1.5) * Math.PI;
+    const orb = phase / 2.6;                            // one periastron burst every ~2.6 GW cycles
+    const burst = Math.pow((1 + Math.cos(orb)) / 2, 5);
+    const amp = baseAmpAt(x) * (1 - 0.35 * env + 2.6 * env * burst);
+    const dPhi = env * (1.3 + 0.9 * Math.sin(orb));     // phase offset + faster phase at periastron
+    return amp * Math.sin(phase + dPhi);
+  }
+
+  function freqAt(u){
+    if (u <= 0) return 30;
+    if (u <= inspiralEnd) return 30 + Math.pow(u / inspiralEnd, 3) * 300;
+    return 330;
+  }
+  function eccAt(u){ return u >= inspiralEnd ? 0 : E0 * envAt(Math.max(u, 0) / inspiralEnd); }
+
+  const N = 900;
+  const dataY = new Float32Array(N + 1);
+  const modelY = new Float32Array(N + 1);
+  (function build(){
+    function mulberry32(a){
+      return function(){
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    const rand = mulberry32(20260710);
+    const gauss = function(){ return Math.sqrt(-2 * Math.log(rand() + 1e-12)) * Math.cos(2 * Math.PI * rand()); };
+    let noise = 0;
+    for (let i = 0; i <= N; i++){
+      const u = i / N;
+      noise = 0.55 * noise + 0.042 * gauss();           // lightly colored noise, σ ≈ 0.05
+      let d;
+      if (Array.isArray(REAL_STRAIN) && REAL_STRAIN.length > 1){
+        const f = u * (REAL_STRAIN.length - 1), k = Math.floor(f), r = f - k;
+        d = REAL_STRAIN[k] + (REAL_STRAIN[Math.min(k + 1, REAL_STRAIN.length - 1)] - REAL_STRAIN[k]) * r;
+      } else {
+        d = circularAt(u) + noise;
+      }
+      dataY[i] = d;
+      modelY[i] = eccentricAt(u);
+    }
+  })();
+
+  const sweepMs = 5200, holdMs = 2200, gapMs = 600;
+  const cycleMs = sweepMs + holdMs + gapMs;
+  let start = performance.now();
+
+  function yOf(v){ return H / 2 - v * (H * 0.42); }
+  const MONO = '10px "JetBrains Mono", monospace';
+
+  function drawGrid(){
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(231,230,239,0.06)';
+    ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(231,230,239,0.045)';
+    for (let i = 1; i < 8; i++){
+      const x = (W / 8) * i;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+  }
+
+  function drawMatchZone(a){
+    const x0 = matchStart * W;
+    ctx.fillStyle = 'rgba(79,195,247,' + (0.07 * a).toFixed(3) + ')';
+    ctx.fillRect(x0, 0, W - x0, H);
+    ctx.strokeStyle = 'rgba(79,195,247,' + (0.35 * a).toFixed(3) + ')';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, H); ctx.stroke();
+    ctx.font = MONO; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(79,195,247,' + (0.95 * a).toFixed(3) + ')';
+    ctx.textAlign = 'left';  ctx.fillText('MODEL ≈ DATA', x0 + 8, 16);
+    ctx.fillStyle = 'rgba(255,106,91,' + (0.95 * a).toFixed(3) + ')';
+    ctx.fillText('MODEL ≠ DATA', 10, 16);
+  }
+
+  function drawMergerLine(){
+    const x = inspiralEnd * W;
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(231,230,239,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.restore();
+    ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(155,161,184,0.9)';
+    ctx.fillText('MERGER', x + 6, H - 8);
+  }
+
+  function drawData(){
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(79,195,247,0.55)';
+    ctx.lineWidth = 1;
+    ctx.lineJoin = 'round';
+    for (let i = 0; i <= N; i++){
+      const x = (i / N) * W, y = yOf(dataY[i]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function drawModel(upTo){
+    const first = Math.ceil(modelStart * N);
+    const last = Math.min(N, Math.floor(upTo * N));
+    if (last < first) return;
+    ctx.beginPath();
+    ctx.strokeStyle = '#FF6A5B';
+    ctx.lineWidth = 1.9;
+    ctx.lineJoin = 'round';
+    for (let i = first; i <= last; i++){
+      const x = (i / N) * W, y = yOf(modelY[i]);
+      if (i === first) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    if (upTo > 0 && upTo < 1){
+      const hx = (last / N) * W, hy = yOf(modelY[last]);
+      ctx.save();
+      ctx.shadowColor = '#FF6A5B'; ctx.shadowBlur = 14;
+      ctx.fillStyle = '#FFB3A9';
+      ctx.beginPath(); ctx.arc(hx, hy, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawFrame(progress, holdAlpha){
+    ctx.clearRect(0, 0, W, H);
+    drawGrid();
+    if (holdAlpha > 0) drawMatchZone(holdAlpha);
+    drawMergerLine();
+    if (showData) drawData();
+    if (showModel && progress > 0) drawModel(progress);
+    if (progress > 0 && progress < 1){
+      const x = progress * W;
+      ctx.strokeStyle = 'rgba(231,230,239,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+  }
+
+  function setReadout(u){
+    readout.innerHTML = 'f ≈ <strong>' + freqAt(u).toFixed(0) + '</strong> Hz &nbsp;|&nbsp; e ≈ <strong>' + eccAt(u).toFixed(2) + '</strong>';
+  }
+
+  function render(now){
+    const elapsed = (now - start) % cycleMs;
+    let progress = 0, holding = false, holdAlpha = 0;
+    if (elapsed < sweepMs){
+      progress = elapsed / sweepMs;
+    } else if (elapsed < sweepMs + holdMs){
+      progress = 1; holding = true;
+      holdAlpha = Math.min(1, (elapsed - sweepMs) / 450);
+    }
+    drawFrame(progress, holdAlpha);
+
+    if (progress > 0) setReadout(progress);
+
+    if (holding){
+      statusDot.classList.add('hold');
+      statusText.textContent = 'Match — model agrees with data near merger and in ringdown';
+    } else {
+      statusDot.classList.remove('hold');
+      statusText.textContent = 'Sweeping — fitting eccentric model to data';
+    }
+    requestAnimationFrame(render);
+  }
 
   function resize(){
     const rect = canvas.getBoundingClientRect();
     W = rect.width; H = rect.height || 260;
     canvas.width = W * dpr;
     canvas.height = H * dpr;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (reduceMotion) drawFrame(1, 1);
   }
   window.addEventListener('resize', resize);
   resize();
 
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Procedural chirp: eccentric inspiral (periastron bursts that smooth
-  // into a continuous chirp as radiation reaction circularizes the orbit),
-  // then ringdown.
-  function strainAt(u, delay, ampScale){
-    const t = u - delay;
-    if (t <= 0) return 0;
-    const inspiralEnd = 0.78;
-    if (t <= inspiralEnd){
-      const x = t / inspiralEnd;
-      const baseAmp = (0.06 + Math.pow(x, 4) * 0.85) * ampScale;
-      const phase = 42 * Math.pow(x, 1.5) * Math.PI;
-
-      // eccentricity decays toward merger as the orbit circularizes
-      const ecc = 0.85 * Math.pow(1 - x, 1.6);
-      // orbital phase advances slower than the GW carrier — one burst per orbit
-      const orbPhase = 15 * Math.pow(x, 1.05) * Math.PI;
-      const burst = Math.pow((1 + Math.cos(orbPhase)) / 2, 3);
-      const amp = baseAmp * (1 + ecc * 1.7 * burst);
-
-      return amp * Math.sin(phase);
-    } else {
-      const x = (t - inspiralEnd) / (1 - inspiralEnd);
-      const amp = 0.91 * Math.exp(-x * 7) * ampScale;
-      const basePhase = 42 * Math.PI;
-      const phase = basePhase + x * 34 * Math.PI;
-      return amp * Math.sin(phase);
-    }
-  }
-
-  function freqAt(u){
-    const inspiralEnd = 0.78;
-    if (u <= 0) return 30;
-    if (u <= inspiralEnd){
-      const x = u / inspiralEnd;
-      return 30 + Math.pow(x, 3) * 300;
-    }
-    return 330;
-  }
-
-  const N = 480;
-  const sweepMs = 4200, holdMs = 1800, gapMs = 500;
-  const cycleMs = sweepMs + holdMs + gapMs;
-  let start = performance.now();
-
-  function drawGrid(){
-    ctx.strokeStyle = 'rgba(231,230,239,0.06)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, H/2);
-    ctx.lineTo(W, H/2);
-    ctx.stroke();
-    for(let i=1;i<8;i++){
-      const x = (W/8)*i;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, H);
-      ctx.strokeStyle = 'rgba(231,230,239,0.045)';
-      ctx.stroke();
-    }
-  }
-
-  function drawTrace(color, delay, ampScale, upTo){
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.6;
-    ctx.globalAlpha = 0.92;
-    let started = false;
-    for(let i=0;i<=N;i++){
-      const u = i/N;
-      if (u > upTo) break;
-      const v = strainAt(u, delay, ampScale);
-      const x = u * W;
-      const y = H/2 - v * (H*0.42);
-      if(!started){ ctx.moveTo(x,y); started = true; } else { ctx.lineTo(x,y); }
-    }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-
-  function render(now){
-    const elapsed = (now - start) % cycleMs;
-    ctx.clearRect(0,0,W,H);
-    drawGrid();
-
-    let progress, holding;
-    if (elapsed < sweepMs){
-      progress = elapsed / sweepMs;
-      holding = false;
-    } else if (elapsed < sweepMs + holdMs){
-      progress = 1;
-      holding = true;
-    } else {
-      progress = 0;
-      holding = false;
-    }
-
-    if (showL1) drawTrace('#FF6A5B', 0.015, 0.9, progress);
-    if (showH1) drawTrace('#4FC3F7', 0, 1, progress);
-
-    // playhead
-    if (progress > 0 && progress < 1){
-      const x = progress * W;
-      ctx.strokeStyle = 'rgba(231,230,239,0.35)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-    }
-
-    if (progress > 0){
-      const f = freqAt(Math.min(progress,1)).toFixed(0);
-      const strainExp = (1.0 + progress*3.4).toFixed(1);
-      readout.innerHTML = 'f ≈ <strong>' + f + '</strong> Hz &nbsp;|&nbsp; strain ≈ <strong>' + strainExp + '×10⁻²¹</strong>';
-    }
-
-    if (holding){
-      statusDot.classList.add('hold');
-      statusText.textContent = 'Coincidence confirmed — H1 & L1 match';
-    } else {
-      statusDot.classList.remove('hold');
-      statusText.textContent = 'Sweeping — coincidence search in progress';
-    }
-
-    if (!reduceMotion){
-      requestAnimationFrame(render);
-    }
-  }
-
   if (reduceMotion){
-    // Draw a static, fully-formed waveform once; skip animation loop.
-    drawGrid();
-    drawTrace('#FF6A5B', 0.015, 0.9, 1);
-    drawTrace('#4FC3F7', 0, 1, 1);
-    readout.innerHTML = 'f ≈ <strong>330</strong> Hz &nbsp;|&nbsp; strain ≈ <strong>4.4×10⁻²¹</strong>';
-    statusText.textContent = 'Coincidence confirmed — H1 & L1 match';
+    setReadout(1);
+    statusText.textContent = 'Match — model agrees with data near merger and in ringdown';
     statusDot.classList.add('hold');
   } else {
     requestAnimationFrame(render);
   }
 
   h1Btn.addEventListener('click', function(){
-    showH1 = !showH1;
-    h1Btn.setAttribute('aria-pressed', showH1 ? 'true' : 'false');
-    if (reduceMotion){
-      ctx.clearRect(0,0,W,H); drawGrid();
-      if (showL1) drawTrace('#FF6A5B', 0.015, 0.9, 1);
-      if (showH1) drawTrace('#4FC3F7', 0, 1, 1);
-    }
+    showData = !showData;
+    h1Btn.setAttribute('aria-pressed', showData ? 'true' : 'false');
+    if (reduceMotion) drawFrame(1, 1);
   });
   l1Btn.addEventListener('click', function(){
-    showL1 = !showL1;
-    l1Btn.setAttribute('aria-pressed', showL1 ? 'true' : 'false');
-    if (reduceMotion){
-      ctx.clearRect(0,0,W,H); drawGrid();
-      if (showL1) drawTrace('#FF6A5B', 0.015, 0.9, 1);
-      if (showH1) drawTrace('#4FC3F7', 0, 1, 1);
-    }
+    showModel = !showModel;
+    l1Btn.setAttribute('aria-pressed', showModel ? 'true' : 'false');
+    if (reduceMotion) drawFrame(1, 1);
   });
   replayBtn.addEventListener('click', function(){
     start = performance.now();
-    if (reduceMotion){ requestAnimationFrame(render); }
+    if (reduceMotion) drawFrame(1, 1);
   });
 
   // --- Rotating neutron star: flash + count each time a beam sweeps past "Earth" ---
