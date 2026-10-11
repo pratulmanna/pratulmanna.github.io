@@ -213,17 +213,23 @@
     padding:14px 20px; border-bottom:1px solid var(--line);
     font-family:'JetBrains Mono', monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-dim);
   }
-  .structure-cross{
-    flex:1;
-    display:flex; align-items:center; justify-content:center;
-    padding:26px;
+  /* both animation panels: header / canvas / footer, canvas fills the middle */
+  .pulsar-panel.sn-panel{ display:flex; flex-direction:column; }
+  .canvas-wrap{ position:relative; flex:1; min-height:300px; }
+  .canvas-wrap canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  .pulsar-panel.sn-panel .pulsar-foot{ flex-wrap:wrap; gap:10px 14px; }
+  .stage-track{ display:flex; align-items:center; gap:9px; }
+  .stage-dot{
+    width:10px; height:10px; padding:0; border-radius:50%; cursor:pointer;
+    background:transparent; border:1px solid var(--ink-dim);
+    transition:background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .structure-svg{ width:100%; max-width:220px; height:auto; }
-  .tick-crust{ transform-origin:100px 100px; animation:spin-cw 4.2s linear infinite; }
-  .tick-outer{ transform-origin:100px 100px; animation:spin-cw 2.3s linear infinite; }
-  .tick-inner{ transform-origin:100px 100px; animation:spin-cw 1s linear infinite; }
-  @keyframes spin-cw{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
-  .layer-label{ font-family:'JetBrains Mono', monospace; font-size:6.5px; fill:var(--ink-dim); letter-spacing:0.03em; }
+  .stage-dot:hover{ border-color:var(--ink); }
+  .stage-dot:focus-visible{ outline:2px solid var(--hanford); outline-offset:3px; }
+  .stage-dot.done{ background:rgba(79,195,247,0.45); border-color:transparent; }
+  .stage-dot.active{ background:var(--livingston); border-color:transparent; box-shadow:0 0 8px var(--livingston); }
+  #stage-text{ margin-left:auto; color:var(--ink); text-align:right; }
 
   .structure-foot{
     display:flex; gap:26px; flex-wrap:wrap;
@@ -233,11 +239,10 @@
   .structure-foot strong{ color:var(--ink); font-weight:500; }
   .structure-foot .swatch-inline{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px; vertical-align:middle; }
 
-  @media (prefers-reduced-motion: reduce){
-    .tick-crust, .tick-outer, .tick-inner{ animation:none; }
-  }
+  .structure-foot .note{ flex-basis:100%; color:var(--ink-dim); opacity:0.8; font-size:0.64rem; }
   @media (max-width:700px){
     .dual-panel{ grid-template-columns:1fr; }
+    #stage-text{ margin-left:0; text-align:left; }
   }
   .catalog{ display:flex; flex-direction:column; }
   .entry{
@@ -478,6 +483,27 @@
       <p class="project-desc">Studying neutron stars whose interior doesn't rotate as a rigid body — layers at different radii spin at different rates, a state that can persist in merger remnants before settling toward uniform rotation.</p>
 
       <div class="dual-panel">
+        <div class="pulsar-panel sn-panel">
+          <div class="pulsar-head">
+            <span>Stellar Collapse · Illustrative</span>
+            <span>Not to scale</span>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="sn-canvas" role="img" aria-label="Animation: a massive star collapses and explodes as a supernova, leaving a hypermassive neutron star that lasts a few seconds before collapsing into a black hole."></canvas>
+          </div>
+          <div class="pulsar-foot">
+            <div class="stage-track" role="group" aria-label="Jump to a stage of the collapse">
+              <button type="button" class="stage-dot" aria-label="Massive star"></button>
+              <button type="button" class="stage-dot" aria-label="Core collapse"></button>
+              <button type="button" class="stage-dot" aria-label="Supernova"></button>
+              <button type="button" class="stage-dot" aria-label="Hypermassive neutron star"></button>
+              <button type="button" class="stage-dot" aria-label="Black hole"></button>
+            </div>
+            <span id="stage-text" aria-live="off">Massive star</span>
+          </div>
+        </div>
+
+        <!-- Previous pulsar animation, kept for reference:
         <div class="pulsar-panel">
           <div class="pulsar-head">
             <span>PSR Monitor · J-Sim</span>
@@ -515,61 +541,21 @@
             <span id="pulse-readout">Pulses detected: 0</span>
           </div>
         </div>
+        -->
 
         <div class="structure-panel">
           <div class="structure-head">
-            <span>Neutron Star Interior</span>
+            <span>Neutron Star Interior · 3D</span>
             <span>Ω(r), not Ω = const.</span>
           </div>
-          <div class="structure-cross">
-            <svg class="structure-svg" viewBox="0 0 200 200" role="img" aria-label="Cross-section of a neutron star showing crust, outer core, and inner core rotating at different speeds, illustrating differential rotation">
-              <defs>
-                <radialGradient id="crustGrad" cx="40%" cy="35%" r="75%">
-                  <stop offset="0%" stop-color="#3a4560"/>
-                  <stop offset="100%" stop-color="#232c42"/>
-                </radialGradient>
-                <radialGradient id="outerGrad" cx="40%" cy="35%" r="75%">
-                  <stop offset="0%" stop-color="#20314f"/>
-                  <stop offset="100%" stop-color="#152238"/>
-                </radialGradient>
-                <radialGradient id="innerGrad" cx="40%" cy="35%" r="75%">
-                  <stop offset="0%" stop-color="#f4f6fb"/>
-                  <stop offset="100%" stop-color="#8fb6d9"/>
-                </radialGradient>
-              </defs>
-
-              <circle cx="100" cy="100" r="92" fill="url(#crustGrad)" stroke="rgba(231,230,239,0.16)" stroke-width="1"/>
-              <circle cx="100" cy="100" r="66" fill="url(#outerGrad)" stroke="rgba(231,230,239,0.12)" stroke-width="1"/>
-              <circle cx="100" cy="100" r="34" fill="url(#innerGrad)" stroke="rgba(231,230,239,0.1)" stroke-width="1"/>
-
-              <!-- crust rotation ticks (slowest) -->
-              <g class="tick-crust">
-                <line x1="100" y1="8" x2="100" y2="20" stroke="#FF6A5B" stroke-width="2.4"/>
-                <line x1="192" y1="100" x2="180" y2="100" stroke="#FF6A5B" stroke-width="2.4"/>
-                <line x1="100" y1="192" x2="100" y2="180" stroke="#FF6A5B" stroke-width="2.4"/>
-                <line x1="8" y1="100" x2="20" y2="100" stroke="#FF6A5B" stroke-width="2.4"/>
-              </g>
-              <!-- outer core ticks (faster) -->
-              <g class="tick-outer">
-                <line x1="100" y1="34" x2="100" y2="46" stroke="#7CA9D6" stroke-width="2.4"/>
-                <line x1="166" y1="100" x2="154" y2="100" stroke="#7CA9D6" stroke-width="2.4"/>
-                <line x1="100" y1="166" x2="100" y2="154" stroke="#7CA9D6" stroke-width="2.4"/>
-                <line x1="34" y1="100" x2="46" y2="100" stroke="#7CA9D6" stroke-width="2.4"/>
-              </g>
-              <!-- inner core ticks (fastest) -->
-              <g class="tick-inner">
-                <line x1="100" y1="66" x2="100" y2="76" stroke="#4FC3F7" stroke-width="2.6"/>
-                <line x1="134" y1="100" x2="124" y2="100" stroke="#4FC3F7" stroke-width="2.6"/>
-              </g>
-
-              <text x="106" y="18" class="layer-label">CRUST</text>
-              <text x="106" y="44" class="layer-label">OUTER CORE</text>
-              <text x="72" y="102" class="layer-label">INNER CORE</text>
-            </svg>
+          <div class="canvas-wrap">
+            <canvas id="ns3d" role="img" aria-label="Three-dimensional animation of a neutron star made of three nested layers, the crust, outer core and inner core, each rotating at a different speed, with the inner core spinning fastest."></canvas>
           </div>
           <div class="structure-foot">
-            <span><span class="swatch-inline" style="background:#4FC3F7;"></span>Core Ω ≈ <strong>9,400 rad/s</strong></span>
-            <span><span class="swatch-inline" style="background:#FF6A5B;"></span>Surface Ω ≈ <strong>3,200 rad/s</strong></span>
+            <span><span class="swatch-inline" style="background:#4FC3F7;"></span>Inner core Ω ≈ <strong>9,400 rad/s</strong></span>
+            <span><span class="swatch-inline" style="background:#7CA9D6;"></span>Outer core Ω ≈ <strong>6,000 rad/s</strong></span>
+            <span><span class="swatch-inline" style="background:#FF6A5B;"></span>Crust Ω ≈ <strong>3,200 rad/s</strong></span>
+            <span class="note">Illustrative values · animation slowed ≈3,000×</span>
           </div>
         </div>
       </div>
@@ -1008,31 +994,449 @@
     if (reduceMotion) drawFrame(1, 1);
   });
 
-  // --- Rotating neutron star: flash + count each time a beam sweeps past "Earth" ---
-  // Two beams, opposite sides of the star, cross the observer's line of sight
-  // twice per full rotation (a real pulsar's "lighthouse effect").
-  const pulsarPeriodMs = 2400; // must match the .spin-group CSS animation-duration
-  const pulseDot = document.getElementById('pulse-dot');
-  const pulseReadout = document.getElementById('pulse-readout');
-  let pulseCount = 0;
-
-  function firePulse(){
-    pulseCount++;
-    pulseDot.classList.add('flash');
-    pulseReadout.textContent = 'Pulses detected: ' + pulseCount;
-    setTimeout(function(){ pulseDot.classList.remove('flash'); }, 160);
-  }
-
-  if (!reduceMotion){
-    setTimeout(function beginPulseLoop(){
-      firePulse();
-      setInterval(firePulse, pulsarPeriodMs / 2);
-    }, pulsarPeriodMs * 0.25);
-  } else {
-    pulseReadout.textContent = 'Pulses detected: — (motion reduced)';
+  // ======================================================================
+  // Neutron-star animations (project 02)
+  //   LEFT : massive star -> core collapse -> supernova -> hypermassive
+  //          neutron star (HMNS) -> collapse to a black hole  (loops)
+  //   RIGHT: 3D neutron star, three layers rotating at different rates
+  // ======================================================================
+  if (reduceMotion){
     document.querySelectorAll('svg').forEach(function(svg){
       if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
     });
+  }
+
+  function rng(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function clamp01(u){ return u < 0 ? 0 : (u > 1 ? 1 : u); }
+  function lerp(a, b, u){ return a + (b - a) * u; }
+  function easeOut(u){ return 1 - Math.pow(1 - u, 3); }
+  function easeIn(u){ return u * u; }
+  function rgb(r, g, b){ return 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')'; }
+
+  function glow(c, x, y, r, col, a0){
+    if (r <= 0.5 || a0 <= 0) return;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(' + col + ',' + a0.toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(' + col + ',0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  }
+
+  function setupCanvas(canvas){
+    const st = { c: canvas.getContext('2d'), W: 0, H: 0, redraw: null };
+    function resize(){
+      const box = (canvas.parentNode || canvas).getBoundingClientRect();
+      st.W = box.width; st.H = box.height || 300;
+      canvas.width = Math.max(1, Math.round(st.W * dpr));
+      canvas.height = Math.max(1, Math.round(st.H * dpr));
+      st.c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (st.redraw) st.redraw();
+    }
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(canvas.parentNode || canvas);
+    else window.addEventListener('resize', resize);
+    resize();
+    return st;
+  }
+
+  // run a frame callback only while the canvas is on screen
+  function runWhenVisible(el, frame){
+    let visible = true, running = false;
+    function loop(now){
+      if (!visible){ running = false; return; }
+      frame(now);
+      requestAnimationFrame(loop);
+    }
+    function kick(){ if (!running){ running = true; requestAnimationFrame(loop); } }
+    if (typeof IntersectionObserver !== 'undefined'){
+      new IntersectionObserver(function(es){
+        visible = es[0].isIntersecting;
+        if (visible) kick();
+      }).observe(el);
+    }
+    kick();
+  }
+
+  // ---------------------------------------------------------------------
+  // LEFT PANEL: stellar collapse
+  // ---------------------------------------------------------------------
+  const snCanvas = document.getElementById('sn-canvas');
+  if (snCanvas){
+    const SN_T = 18.6;                         // loop length (s)
+    const T_COLLAPSE = 3.0, T_SN = 4.0, T_HMNS = 7.0, T_BH_START = 12.0, T_BH = 13.2;
+    const STAGE_START = [0, T_COLLAPSE, T_SN, T_HMNS, T_BH_START];
+    const STAGE_NAME = ['Massive star', 'Core collapse', 'Supernova', 'Hypermassive neutron star', 'Collapse → black hole'];
+
+    const st = setupCanvas(snCanvas);
+    const r1 = rng(4242);
+    const bgStars = [], ejecta = [];
+    for (let i = 0; i < 70; i++) bgStars.push({ x: r1(), y: r1(), s: 0.6 + r1() * 1.1, a: 0.18 + r1() * 0.5, ph: r1() * 6.28 });
+    for (let i = 0; i < 260; i++) ejecta.push({ a: r1() * Math.PI * 2, k: 0.22 + 0.95 * Math.pow(r1(), 0.8), sz: 0.9 + r1() * 2.0, br: 0.35 + r1() * 0.65 });
+
+    // gravitational-wave "ripples": [start time, strength, rgb]
+    const ripples = [];
+    for (let k = 0; k < 6; k++) ripples.push([T_HMNS + 0.3 + k * 0.85, 0.30 + 0.07 * k, '120,215,255']);
+    ripples.push([T_BH_START, 1.0, '255,140,110'], [13.0, 0.55, '255,170,140'], [13.7, 0.34, '255,170,140'], [14.5, 0.2, '255,170,140']);
+
+    function drawHMNS(c, cx, cy, r, t, glowScale, flick){
+      glow(c, cx, cy, r * 4.4 * glowScale, '110,205,255', 0.30 * flick);
+      glow(c, cx, cy, r * 2.0 * glowScale, '210,244,255', 0.38 * flick);
+      const rx = r * 1.22, ry = r * 0.94;            // oblate: fast, differential rotation
+      c.save();
+      c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); c.clip();
+      const g = c.createRadialGradient(cx - rx * 0.28, cy - ry * 0.32, r * 0.1, cx, cy, rx * 1.05);
+      g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.5, '#BFE8FF'); g.addColorStop(1, '#4F9BE0');
+      c.fillStyle = g; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+      // belts at different latitudes spinning at different rates
+      const lat = [-0.58, 0, 0.58], om = [1.5, 2.9, 1.8];
+      c.strokeStyle = 'rgba(8,28,60,0.55)'; c.lineWidth = Math.max(1, r * 0.07); c.lineCap = 'round';
+      for (let b = 0; b < 3; b++){
+        const yy = cy + lat[b] * ry, hw = rx * Math.sqrt(1 - lat[b] * lat[b]);
+        for (let j = 0; j < 6; j++){
+          const ph = j * Math.PI * 2 / 6 + om[b] * t;
+          if (Math.cos(ph) <= 0.05) continue;
+          const xx = cx + hw * Math.sin(ph), h = ry * 0.20 * Math.cos(ph);
+          c.beginPath(); c.moveTo(xx, yy - h); c.lineTo(xx, yy + h); c.stroke();
+        }
+      }
+      c.restore();
+      c.strokeStyle = 'rgba(225,247,255,0.6)'; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); c.stroke();
+    }
+
+    function drawDiskHalf(c, cx, cy, Rd, tilt, t, da, back){
+      const K = 22;
+      c.save();
+      c.lineCap = 'round';
+      for (let k = 0; k < K; k++){
+        const f = 0.30 + 0.70 * k / (K - 1);
+        const rx = Rd * f, ry = rx * tilt;
+        const cr = f < 0.5 ? lerp(255, 255, f / 0.5) : lerp(255, 190, (f - 0.5) / 0.5);
+        const cg = f < 0.5 ? lerp(238, 150, f / 0.5) : lerp(150, 70, (f - 0.5) / 0.5);
+        const cb = f < 0.5 ? lerp(205, 80, f / 0.5) : lerp(80, 55, (f - 0.5) / 0.5);
+        c.strokeStyle = 'rgba(' + (cr | 0) + ',' + (cg | 0) + ',' + (cb | 0) + ',' + (da * (0.78 - 0.5 * f)).toFixed(3) + ')';
+        c.lineWidth = 1.1 + (1 - f) * 1.8;
+        c.setLineDash([9 + 8 * f, 5 + 4 * f]);
+        c.lineDashOffset = -t * 55 / Math.pow(f, 1.5);
+        c.beginPath();
+        if (back) c.ellipse(cx, cy, rx, ry, 0, Math.PI, Math.PI * 2);
+        else c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI);
+        c.stroke();
+      }
+      c.setLineDash([]);
+      // hot spot orbiting the hole
+      const a = t * 1.5, f2 = 0.5, sy = Math.sin(a);
+      if ((sy < 0) === back){
+        const hx = cx + Rd * f2 * Math.cos(a), hy = cy + Rd * f2 * tilt * sy;
+        glow(c, hx, hy, 9, '255,240,205', 0.9 * da);
+      }
+      c.restore();
+    }
+
+    function drawSN(t){
+      const c = st.c, W = st.W, H = st.H;
+      const cx = W / 2, cy = H / 2, s = Math.min(W, H) / 2;
+      c.clearRect(0, 0, W, H);
+      for (let i = 0; i < bgStars.length; i++){
+        const b = bgStars[i];
+        c.fillStyle = 'rgba(231,230,239,' + (b.a * (0.7 + 0.3 * Math.sin(t * 1.4 + b.ph))).toFixed(3) + ')';
+        c.fillRect(b.x * W, b.y * H, b.s, b.s);
+      }
+      let fade = 1;
+      if (t < 0.5) fade = t / 0.5;
+      if (t > SN_T - 0.9) fade = (SN_T - t) / 0.9;
+      c.save();
+      c.globalAlpha = clamp01(fade);
+
+      // ---- ripples (gravitational waves) ----
+      for (let i = 0; i < ripples.length; i++){
+        const age = t - ripples[i][0];
+        if (age <= 0 || age > 2.8) continue;
+        const u = age / 2.8, rr = s * (0.15 + 0.95 * u);
+        c.strokeStyle = 'rgba(' + ripples[i][2] + ',' + (ripples[i][1] * 0.55 * Math.pow(1 - u, 1.4)).toFixed(3) + ')';
+        c.lineWidth = 1.3;
+        c.beginPath(); c.ellipse(cx, cy, rr * 1.07, rr * 0.93, (i % 2) * Math.PI / 2, 0, Math.PI * 2); c.stroke();
+      }
+
+      if (t < T_COLLAPSE){
+        // ---- massive star ----
+        const R0 = s * 0.60, r = R0 * (1 + 0.018 * Math.sin(t * 5));
+        glow(c, cx, cy, r * 1.65, '255,120,70', 0.30);
+        const g = c.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+        g.addColorStop(0, '#FFD9A0'); g.addColorStop(0.45, '#FF9A55'); g.addColorStop(0.85, '#E0502F'); g.addColorStop(1, '#9E2A1F');
+        c.fillStyle = g; c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fill();
+        c.save(); c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.clip();
+        for (let i = 0; i < 14; i++){          // convective mottling
+          const a = i * 0.45 + t * 0.12 * (1 + (i % 3) * 0.3), rad = r * (0.30 + 0.55 * ((i * 37) % 10) / 10);
+          c.fillStyle = 'rgba(255,232,185,0.10)';
+          c.beginPath(); c.arc(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, r * 0.13, 0, Math.PI * 2); c.fill();
+        }
+        c.restore();
+        c.strokeStyle = 'rgba(255,255,255,0.10)'; c.lineWidth = 1;   // onion-shell layers
+        [0.74, 0.52, 0.33, 0.17].forEach(function(f){ c.beginPath(); c.arc(cx, cy, r * f, 0, Math.PI * 2); c.stroke(); });
+        glow(c, cx, cy, r * (0.22 - 0.07 * t / T_COLLAPSE), '255,255,255', 0.35 + 0.35 * t / T_COLLAPSE);
+      } else if (t < T_SN){
+        // ---- core collapse ----
+        const u = t - T_COLLAPSE, R0 = s * 0.60;
+        const r = lerp(R0, s * 0.07, easeIn(u));
+        const ox = Math.sin(t * 90) * u * 3, oy = Math.cos(t * 83) * u * 3;
+        glow(c, cx + ox, cy + oy, r * 2.6, rgb(lerp(255, 130, u), lerp(120, 190, u), lerp(70, 255, u)).replace('rgb(', '').replace(')', ''), 0.30 + 0.45 * u);
+        const g = c.createRadialGradient(cx + ox - r * 0.3, cy + oy - r * 0.3, r * 0.1, cx + ox, cy + oy, r);
+        g.addColorStop(0, '#FFFFFF');
+        g.addColorStop(0.5, rgb(lerp(255, 185, u), lerp(154, 225, u), lerp(85, 255, u)));
+        g.addColorStop(1, rgb(lerp(224, 90, u), lerp(80, 150, u), lerp(47, 255, u)));
+        c.fillStyle = g; c.beginPath(); c.arc(cx + ox, cy + oy, r, 0, Math.PI * 2); c.fill();
+        if (u > 0.75){
+          const k = (u - 0.75) / 0.25;
+          glow(c, cx, cy, s * (0.3 + 0.5 * k), '235,248,255', 0.9 * k);
+        }
+      } else {
+        const v = clamp01((t - T_SN) / 3.0);
+        if (t < T_BH_START){
+          // ---- supernova + hypermassive neutron star ----
+          if (t < T_HMNS){
+            const fl = Math.max(0, 1 - v * 2.8);
+            glow(c, cx, cy, s * (0.5 + 1.0 * v), '235,248,255', 0.9 * fl);
+            glow(c, cx, cy, s * (0.15 + 1.15 * easeOut(v)), '255,130,80', 0.30 * Math.pow(1 - v, 1.2));
+            const rr = s * (0.12 + 1.25 * easeOut(v));
+            c.save();
+            c.strokeStyle = 'rgba(255,175,125,' + (0.85 * (1 - v)).toFixed(3) + ')';
+            c.lineWidth = 0.6 + 3 * (1 - v);
+            c.shadowColor = '#FF6A5B'; c.shadowBlur = 14;
+            c.beginPath(); c.arc(cx, cy, rr, 0, Math.PI * 2); c.stroke();
+            c.restore();
+            for (let i = 0; i < ejecta.length; i++){
+              const e = ejecta[i], rp = s * (0.10 + e.k * 1.15 * easeOut(v));
+              const al = Math.pow(1 - v, 1.1) * (0.3 + 0.7 * e.br);
+              if (al <= 0.01) continue;
+              c.fillStyle = 'rgba(255,' + (lerp(235, 110, v) | 0) + ',' + (lerp(190, 70, v) | 0) + ',' + al.toFixed(3) + ')';
+              const sz = e.sz * (1 - 0.4 * v);
+              c.fillRect(cx + Math.cos(e.a) * rp, cy + Math.sin(e.a) * rp, sz, sz);
+            }
+          }
+          let rH = s * 0.115, gs = 1, flick = 1;
+          if (t < T_HMNS) rH = lerp(s * 0.07, s * 0.115, easeOut(clamp01((t - T_SN) / 0.7)));
+          else {
+            const w = (t - T_HMNS) / (T_BH_START - T_HMNS);
+            rH *= 1 + 0.025 * Math.sin(t * 10) * (1 + 3 * Math.pow(w, 3));
+            flick = 1 + 0.25 * Math.sin(t * 23) * Math.pow(w, 3);
+            const sq = clamp01((t - 10.8) / 1.2);
+            rH *= 1 - 0.12 * sq; gs = 1 + 0.6 * sq;
+          }
+          drawHMNS(c, cx, cy, rH, t, gs, flick);
+        } else {
+          // ---- collapse to a black hole ----
+          if (t < T_BH){
+            const x = (t - T_BH_START) / (T_BH - T_BH_START);
+            const rH = s * 0.104 * (1 - easeIn(x));
+            if (rH > 1) drawHMNS(c, cx, cy, rH, t, 1 + 1.5 * x, 1 + 0.3 * x);
+            if (x > 0.7){
+              const k = (x - 0.7) / 0.3;
+              glow(c, cx, cy, s * (0.4 + 0.8 * k), '255,255,255', 0.9 * k);
+            }
+          } else {
+            const k = clamp01((t - T_BH) / 0.7);
+            if (k < 1) glow(c, cx, cy, s * 1.2, '255,245,235', 0.8 * (1 - k));
+          }
+          const bt = t - 12.85;                 // burst of rays at the moment of collapse
+          if (bt > 0 && bt < 0.9){
+            const k = bt / 0.9, e = easeOut(k);
+            c.strokeStyle = 'rgba(255,225,200,' + (0.8 * (1 - k)).toFixed(3) + ')'; c.lineWidth = 1.4;
+            for (let i = 0; i < 18; i++){
+              const a = i * Math.PI * 2 / 18 + 0.2, r0 = s * (0.12 + 0.55 * e), r1 = r0 + s * 0.28 * (1 - k);
+              c.beginPath(); c.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); c.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); c.stroke();
+            }
+          }
+          const rBH = s * 0.15 * easeOut(clamp01((t - 13.0) / 0.5));
+          if (rBH > 0.5){
+            const da = clamp01((t - T_BH) / 0.9), Rd = s * 0.64, tilt = 0.24;
+            glow(c, cx, cy, Rd * 1.25, '255,140,70', 0.10 * da);
+            drawDiskHalf(c, cx, cy, Rd, tilt, t, da, true);
+            c.fillStyle = '#000'; c.beginPath(); c.arc(cx, cy, rBH, 0, Math.PI * 2); c.fill();
+            c.save();
+            c.strokeStyle = 'rgba(255,226,192,' + (0.9 * da).toFixed(3) + ')'; c.lineWidth = 1.6;
+            c.shadowColor = '#FF9A55'; c.shadowBlur = 12;
+            c.beginPath(); c.arc(cx, cy, rBH * 1.08, 0, Math.PI * 2); c.stroke();
+            c.strokeStyle = 'rgba(255,170,110,' + (0.35 * da).toFixed(3) + ')'; c.lineWidth = 5;
+            c.beginPath(); c.arc(cx, cy, rBH * 1.65, Math.PI * 1.12, Math.PI * 1.88); c.stroke();   // lensed far side of the disk
+            c.restore();
+            drawDiskHalf(c, cx, cy, Rd, tilt, t, da, false);
+          }
+        }
+      }
+      c.restore();
+    }
+
+    // stage indicator (dots are buttons that jump to a stage)
+    const dots = Array.prototype.slice.call(document.querySelectorAll('.stage-dot'));
+    const stageText = document.getElementById('stage-text');
+    let lastKey = -1;
+    function updateStage(t){
+      let idx = 0;
+      for (let i = 0; i < STAGE_START.length; i++) if (t >= STAGE_START[i]) idx = i;
+      const key = idx * 10 + (t >= T_BH ? 1 : 0);
+      if (key === lastKey) return;
+      lastKey = key;
+      dots.forEach(function(d, i){
+        d.classList.toggle('active', i === idx);
+        d.classList.toggle('done', i < idx);
+      });
+      stageText.textContent = t >= T_BH ? 'Black hole' : STAGE_NAME[idx];
+    }
+
+    let snStart = performance.now();
+    dots.forEach(function(d, i){
+      d.addEventListener('click', function(){
+        snStart = performance.now() - (STAGE_START[i] + 0.02) * 1000;
+        if (reduceMotion){ const t = STAGE_START[i] + 1.5; drawSN(t); updateStage(t); }
+      });
+    });
+
+    if (reduceMotion){
+      st.redraw = function(){ drawSN(9.0); };
+      drawSN(9.0); updateStage(9.0);
+    } else {
+      runWhenVisible(snCanvas, function(now){
+        const t = ((now - snStart) / 1000) % SN_T;
+        drawSN(t); updateStage(t);
+      });
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // RIGHT PANEL: 3D layered neutron star (differential rotation)
+  //   Three nested wireframe shells. A cutaway "window" (fixed in the view)
+  //   lets you see through the crust and outer core to the hot inner core,
+  //   while each shell spins at its own rate.
+  // ---------------------------------------------------------------------
+  const nsCanvas = document.getElementById('ns3d');
+  if (nsCanvas){
+    const st = setupCanvas(nsCanvas);
+    // periods keep the ratio of the Ω values in the legend (3,200 : 6,000 : 9,400 rad/s)
+    // win = [cos(angle) below which a line is fully visible, cos(angle) above which it is cut away]
+    const SHELLS = [
+      { r: 1.00, period: 6.00, col: [255, 106, 91],  w: 1.0,  base: 0.85, mer: 12, par: [-60, -30, 0, 30, 60], win: [0.72, 0.80] },
+      { r: 0.70, period: 3.20, col: [124, 169, 214], w: 1.25, base: 0.95, mer: 8,  par: [-40, 0, 40],         win: [0.86, 0.925] },
+      { r: 0.40, period: 2.05, col: [79, 195, 247],  w: 1.7,  base: 1.00, mer: 6,  par: [0],                  win: null }
+    ];
+    const WD = (function(){ const v = [0.20, 0.16, 0.965], n = Math.hypot(v[0], v[1], v[2]); return [v[0] / n, v[1] / n, v[2] / n]; })();
+
+    let total = 0;
+    SHELLS.forEach(function(sh){
+      sh.lines = [];
+      const MS = Math.round(14 + sh.r * 16);
+      for (let j = 0; j < sh.mer; j++){
+        const lam = j * 2 * Math.PI / sh.mer, pts = [];
+        for (let m = 0; m <= MS; m++){
+          const lat = -Math.PI / 2 + Math.PI * m / MS;
+          pts.push([Math.cos(lat) * Math.cos(lam) * sh.r, Math.sin(lat) * sh.r, Math.cos(lat) * Math.sin(lam) * sh.r]);
+        }
+        sh.lines.push({ pts: pts, tracer: j === 0 });
+        total += MS;
+      }
+      sh.par.forEach(function(deg){
+        const lat = deg * Math.PI / 180, S = Math.round(24 + sh.r * 24), pts = [];
+        for (let m = 0; m <= S; m++){
+          const lon = 2 * Math.PI * m / S;
+          pts.push([Math.cos(lat) * Math.cos(lon) * sh.r, Math.sin(lat) * sh.r, Math.cos(lat) * Math.sin(lon) * sh.r]);
+        }
+        sh.lines.push({ pts: pts, tracer: false });
+        total += S;
+      });
+      total += 1;                                   // one tracer bead per shell
+    });
+    const pool = [];
+    for (let i = 0; i < total; i++) pool.push({ x1: 0, y1: 0, x2: 0, y2: 0, z: 0, a: 0, k: 0, tr: false, bead: false });
+
+    function smooth(e0, e1, x){ const u = clamp01((x - e0) / (e1 - e0)); return u * u * (3 - 2 * u); }
+
+    function drawNS(t){
+      const c = st.c, W = st.W, H = st.H;
+      const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.38;
+      c.clearRect(0, 0, W, H);
+      const pitch = 0.42 + 0.07 * Math.sin(t * 0.35), cp = Math.cos(pitch), sp = Math.sin(pitch);
+
+      // translucent bodies (crust, outer core) and the hot inner core
+      let g = c.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R);
+      g.addColorStop(0, 'rgba(70,86,125,0.40)'); g.addColorStop(1, 'rgba(14,20,36,0.30)');
+      c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(231,230,239,0.14)'; c.lineWidth = 1;
+      c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.stroke();
+      glow(c, cx, cy, R * 0.75, '79,195,247', 0.20);
+      g = c.createRadialGradient(cx - R * 0.08, cy - R * 0.10, R * 0.03, cx, cy, R * 0.40);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.55, 'rgba(150,220,255,0.75)'); g.addColorStop(1, 'rgba(60,140,225,0.55)');
+      c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 0.40, 0, Math.PI * 2); c.fill();
+
+      // spin axis
+      c.save();
+      c.setLineDash([3, 4]); c.strokeStyle = 'rgba(231,230,239,0.35)';
+      c.beginPath(); c.moveTo(cx, cy + 1.28 * cp * R); c.lineTo(cx, cy - 1.28 * cp * R); c.stroke();
+      c.restore();
+      c.font = '10px "JetBrains Mono", monospace'; c.fillStyle = 'rgba(155,161,184,0.9)';
+      c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+      c.fillText('spin axis Ω', cx + 8, cy - 1.28 * cp * R + 4);
+
+      // transform every line segment into screen space
+      let n = 0;
+      for (let k = 0; k < SHELLS.length; k++){
+        const sh = SHELLS[k], phi = (Math.PI * 2 / sh.period) * t, cf = Math.cos(phi), sf = Math.sin(phi), win = sh.win;
+        function proj(p){
+          const xr = p[0] * cf + p[2] * sf, zr = -p[0] * sf + p[2] * cf;
+          const y2 = p[1] * cp - zr * sp, z2 = p[1] * sp + zr * cp;
+          return [cx + xr * R, cy - y2 * R, z2, (xr * WD[0] + y2 * WD[1] + z2 * WD[2]) / sh.r];
+        }
+        for (let li = 0; li < sh.lines.length; li++){
+          const ln = sh.lines[li];
+          let prev = proj(ln.pts[0]);
+          for (let i = 1; i < ln.pts.length; i++){
+            const cur = proj(ln.pts[i]), it = pool[n++];
+            it.x1 = prev[0]; it.y1 = prev[1]; it.x2 = cur[0]; it.y2 = cur[1];
+            it.z = (prev[2] + cur[2]) / 2; it.k = k; it.tr = ln.tracer; it.bead = false;
+            const d = clamp01((it.z / sh.r + 1) / 2);
+            let a = sh.base * (0.10 + 0.90 * Math.pow(d, 1.3));
+            if (win) a *= 1 - smooth(win[0], win[1], (prev[3] + cur[3]) / 2);
+            it.a = a;
+            prev = cur;
+          }
+        }
+        // tracer bead on the equator of this shell
+        const bp = proj([sh.r, 0, 0]), bi = pool[n++];
+        bi.x1 = bp[0]; bi.y1 = bp[1]; bi.z = bp[2]; bi.k = k; bi.bead = true; bi.tr = false;
+        const bd = clamp01((bp[2] / sh.r + 1) / 2);
+        bi.a = (0.30 + 0.70 * bd) * (win ? 1 - smooth(win[0], win[1], bp[3]) : 1);
+      }
+      pool.sort(function(a, b){ return a.z - b.z; });
+
+      c.lineCap = 'round';
+      for (let i = 0; i < pool.length; i++){
+        const it = pool[i];
+        if (it.a < 0.015) continue;
+        const sh = SHELLS[it.k], col = sh.col;
+        if (it.bead){
+          glow(c, it.x1, it.y1, 11, col[0] + ',' + col[1] + ',' + col[2], 0.55 * it.a);
+          c.fillStyle = 'rgba(255,255,255,' + it.a.toFixed(3) + ')';
+          c.beginPath(); c.arc(it.x1, it.y1, 3.1, 0, Math.PI * 2); c.fill();
+        } else {
+          const m = it.tr ? 0.55 : 0;                       // tracer meridian: brighter, whiter
+          c.strokeStyle = 'rgba(' + ((col[0] + (255 - col[0]) * m) | 0) + ',' + ((col[1] + (255 - col[1]) * m) | 0) + ',' + ((col[2] + (255 - col[2]) * m) | 0) + ',' + Math.min(1, it.a * (it.tr ? 1.25 : 1)).toFixed(3) + ')';
+          c.lineWidth = sh.w + (it.tr ? 0.9 : 0);
+          c.beginPath(); c.moveTo(it.x1, it.y1); c.lineTo(it.x2, it.y2); c.stroke();
+        }
+      }
+    }
+
+    if (reduceMotion){
+      st.redraw = function(){ drawNS(0.8); };
+      drawNS(0.8);
+    } else {
+      runWhenVisible(nsCanvas, function(now){ drawNS(now / 1000); });
+    }
   }
 
   // --- Redshift scroll effect ---
